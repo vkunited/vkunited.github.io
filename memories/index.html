@@ -73,6 +73,20 @@
 
         .lead { text-align: center; color: #555; margin-bottom: 22px; }
 
+        /* ---------- Privacy-browser warning ---------- */
+        .browser-warn {
+            display: none; background: #fbeec9; border: 1px solid var(--secondary-color);
+            color: #7a6a2f; padding: 16px 18px; border-radius: 8px; margin-bottom: 20px;
+            font-size: 0.88rem; text-align: center; line-height: 1.5;
+        }
+        .browser-warn.show { display: block; }
+        .browser-warn b { color: #5c6a56; }
+        .browser-warn .copy-link {
+            display: inline-block; margin-top: 12px; cursor: pointer; border: none;
+            font-family: 'Montserrat', sans-serif; font-size: 0.78rem; letter-spacing: 1px; text-transform: uppercase;
+            background: var(--secondary-color); color: #3a3320; padding: 9px 18px; border-radius: 20px;
+        }
+
         /* ---------- Upload ---------- */
         .drop {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -195,27 +209,41 @@
     </div>
 
     <main>
+        <!-- Privacy-browser warning (shown only if the API is being blocked) -->
+        <div class="browser-warn" id="browserWarn">
+            <div>
+                <span data-lang="en">⚠️ Your browser is blocking uploads (common in <b>DuckDuckGo</b> &amp; <b>Brave</b>). Please open this page in <b>Safari</b> or <b>Chrome</b> to share your memories.</span>
+                <span data-lang="hu">⚠️ A böngésződ blokkolja a feltöltést (gyakori a <b>DuckDuckGo</b> és <b>Brave</b> esetén). Kérjük, nyisd meg ezt az oldalt <b>Safari</b> vagy <b>Chrome</b> böngészőben.</span>
+                <span data-lang="vi">⚠️ Trình duyệt của bạn đang chặn tải lên (thường gặp ở <b>DuckDuckGo</b> &amp; <b>Brave</b>). Vui lòng mở trang này bằng <b>Safari</b> hoặc <b>Chrome</b> để chia sẻ kỷ niệm.</span>
+            </div>
+            <button class="copy-link" onclick="copyLink()">
+                <span data-lang="en">📋 Copy link</span>
+                <span data-lang="hu">📋 Link másolása</span>
+                <span data-lang="vi">📋 Sao chép liên kết</span>
+            </button>
+        </div>
+
         <!-- ============ UPLOAD PANEL ============ -->
         <section class="panel active" id="panel-upload">
             <div class="card">
-                <p class="lead" data-lang="en">Take a photo or video right now, or pick from your gallery. Add a little note if you like!</p>
-                <p class="lead" data-lang="hu">Készíts most egy fotót vagy videót, vagy válassz a galériádból. Írj hozzá egy kis üzenetet, ha szeretnél!</p>
-                <p class="lead" data-lang="vi">Chụp ảnh hoặc quay video ngay bây giờ, hoặc chọn từ thư viện của bạn. Thêm một lời nhắn nếu bạn muốn!</p>
+                <p class="lead" data-lang="en">Take a photo or video right now to capture the moment. Add a little note if you like!</p>
+                <p class="lead" data-lang="hu">Készíts most egy fotót vagy videót, hogy megörökítsd a pillanatot. Írj hozzá egy kis üzenetet, ha szeretnél!</p>
+                <p class="lead" data-lang="vi">Chụp ảnh hoặc quay video ngay bây giờ để lưu giữ khoảnh khắc. Thêm một lời nhắn nếu bạn muốn!</p>
 
                 <label class="drop" for="fileInput" id="dropZone">
                     <div class="icon">📸</div>
                     <div class="big">
-                        <span data-lang="en">Tap to add photos &amp; videos</span>
-                        <span data-lang="hu">Koppints fotók és videók hozzáadásához</span>
-                        <span data-lang="vi">Chạm để thêm ảnh &amp; video</span>
+                        <span data-lang="en">Tap to take a photo or video</span>
+                        <span data-lang="hu">Koppints fotó vagy videó készítéséhez</span>
+                        <span data-lang="vi">Chạm để chụp ảnh hoặc quay video</span>
                     </div>
                     <div class="small">
-                        <span data-lang="en">You can select several at once</span>
-                        <span data-lang="hu">Egyszerre többet is kiválaszthatsz</span>
-                        <span data-lang="vi">Bạn có thể chọn nhiều cùng lúc</span>
+                        <span data-lang="en">Camera only — capture as many as you like!</span>
+                        <span data-lang="hu">Csak kamera — készíts annyit, amennyit szeretnél!</span>
+                        <span data-lang="vi">Chỉ máy ảnh — chụp bao nhiêu tùy thích!</span>
                     </div>
                 </label>
-                <input type="file" id="fileInput" accept="image/*,video/*" multiple>
+                <input type="file" id="fileInput" accept="image/*,video/*" capture="environment">
 
                 <div class="selected-grid" id="selectedGrid"></div>
 
@@ -378,7 +406,12 @@ async function startUpload() {
             bar.style.width = (done / total * 100) + '%';
         } catch (err) {
             console.error(err);
-            showToast(tr('Upload failed — please try again', 'A feltöltés sikertelen — próbáld újra', 'Tải lên thất bại — vui lòng thử lại'), true);
+            if (isBlockedError(err)) {
+                document.getElementById('browserWarn').classList.add('show');
+                showToast(tr('Upload blocked — please open in Safari or Chrome', 'A feltöltés blokkolva — nyisd meg Safariban vagy Chrome-ban', 'Tải lên bị chặn — vui lòng mở bằng Safari hoặc Chrome'), true);
+            } else {
+                showToast(tr('Upload failed — please try again', 'A feltöltés sikertelen — próbáld újra', 'Tải lên thất bại — vui lòng thử lại'), true);
+            }
             btn.disabled = false;
             return;
         }
@@ -501,8 +534,36 @@ function showToast(msg, isErr) {
     clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
 }
 
+/* ---------- privacy-browser detection ---------- */
+function isBlockedError(err) {
+    // DuckDuckGo/Brave block the cross-site request -> fetch/XHR rejects with a network error
+    return (err instanceof TypeError) || /failed to fetch|networkerror|load failed|network error/i.test(String(err && err.message || err));
+}
+
+async function probeConnectivity() {
+    try {
+        await fetch(`${API_BASE}/`, { method: 'GET', cache: 'no-store' });
+        // reachable — hide the warning if it was shown
+        document.getElementById('browserWarn').classList.remove('show');
+    } catch (e) {
+        // blocked (privacy browser) — warn the guest up front
+        document.getElementById('browserWarn').classList.add('show');
+    }
+}
+
+function copyLink() {
+    const url = location.href;
+    const done = () => showToast(tr('Link copied — paste it into Safari or Chrome', 'Link másolva — illeszd be Safariba vagy Chrome-ba', 'Đã sao chép — dán vào Safari hoặc Chrome'));
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(done).catch(() => prompt('Copy this link:', url));
+    } else {
+        prompt('Copy this link:', url);
+    }
+}
+
 /* ---------- init ---------- */
 setLang(localStorage.getItem('vk_lang') || 'en');
+probeConnectivity();
 </script>
 </body>
 </html>
