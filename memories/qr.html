@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vi Vien &amp; Khanh — QR Card</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Montserrat:wght@300;400;500&display=swap');
+        :root { --primary-color:#6B7A64; --secondary-color:#D4AF37; --bg-color:#FAF9F6; --text-color:#333; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Montserrat',sans-serif; background:#e9e6dd; color:var(--text-color); display:flex; flex-direction:column; align-items:center; padding:30px 16px; }
+        h1,h2 { font-family:'Playfair Display',serif; font-weight:400; }
+
+        .card {
+            background:var(--bg-color); width:480px; max-width:100%; padding:48px 40px; text-align:center;
+            border:1px solid var(--secondary-color); box-shadow:0 8px 30px rgba(0,0,0,0.12);
+        }
+        .card .names { font-family:'Playfair Display',serif; font-weight:400; font-size:2.4rem; color:var(--primary-color); }
+        .card .amp { color:var(--secondary-color); }
+        .card .date { letter-spacing:4px; text-transform:uppercase; font-size:0.8rem; color:var(--secondary-color); margin-top:6px; }
+        .rule { width:50px; height:2px; background:var(--secondary-color); margin:22px auto; }
+        .card .invite { font-size:1.05rem; color:#555; margin-bottom:6px; }
+        .card .invite.alt { font-size:0.85rem; color:#888; }
+        #qrcode { display:inline-block; padding:16px; background:#fff; border-radius:8px; margin:24px auto 18px; box-shadow:0 2px 10px rgba(0,0,0,0.06); }
+        #qrcode img, #qrcode canvas { display:block; }
+        .url { font-size:0.95rem; letter-spacing:1px; color:var(--primary-color); word-break:break-all; }
+        .foot { margin-top:22px; font-size:0.75rem; color:#aaa; }
+
+        .controls { margin-top:26px; display:flex; gap:12px; }
+        .controls button { cursor:pointer; font-family:'Montserrat',sans-serif; font-size:0.8rem; letter-spacing:1px; text-transform:uppercase;
+            background:var(--primary-color); color:#fff; border:none; padding:12px 22px; border-radius:30px; }
+
+        @media print {
+            body { background:#fff; padding:0; }
+            .controls { display:none; }
+            .card { border:none; box-shadow:none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="card" id="card">
+        <div class="names">Vi Vien <span class="amp">&amp;</span> Khanh</div>
+        <div class="date">08 · 08 · 2026</div>
+        <div class="rule"></div>
+        <p class="invite">Share your photos &amp; videos with us</p>
+        <p class="invite alt">Oszd meg a fotóidat · Chia sẻ ảnh &amp; video của bạn</p>
+        <div id="qrcode"></div>
+        <div class="url" id="urlText"></div>
+        <div class="foot">Scan with your phone camera 📷</div>
+    </div>
+
+    <div class="controls">
+        <button onclick="window.print()">🖨 Print</button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script>
+        // The page guests land on. Change if you use a different path/subdomain.
+        const MEMORIES_URL = "https://www.vkunited.com/memories";
+        document.getElementById('urlText').textContent = "vkunited.com/memories";
+        new QRCode(document.getElementById("qrcode"), {
+            text: MEMORIES_URL,
+            width: 220, height: 220,
+            colorDark: "#6B7A64", colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+    </script>
+</body>
+</html>

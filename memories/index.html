@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vi Vien &amp; Khanh — Share Your Memories</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Montserrat:wght@300;400;500&display=swap');
+
+        :root {
+            --primary-color: #6B7A64; /* Sage Green */
+            --secondary-color: #D4AF37; /* Soft Gold */
+            --bg-color: #FAF9F6;       /* Off-white */
+            --text-color: #333333;
+            --light-bg: #FFFFFF;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            line-height: 1.6;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        h1, h2, h3 { font-family: 'Playfair Display', serif; font-weight: 400; }
+
+        /* ---------- Header ---------- */
+        header {
+            text-align: center;
+            padding: 40px 20px 24px;
+            background: var(--light-bg);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        header .names { font-family: 'Playfair Display', serif; font-weight: 400; font-size: 2.4rem; color: var(--primary-color); }
+        header .date  { font-size: 0.9rem; letter-spacing: 2px; text-transform: uppercase; color: var(--secondary-color); margin-top: 6px; }
+        header .tagline { font-size: 1rem; margin-top: 14px; color: #666; }
+
+        .lang-switch { margin-top: 18px; display: flex; justify-content: center; gap: 14px; }
+        .lang-switch img {
+            height: 20px; width: auto; cursor: pointer; opacity: 0.6;
+            border-radius: 2px; transition: opacity 0.25s, transform 0.2s;
+        }
+        .lang-switch img:hover { transform: translateY(-2px); }
+
+        /* ---------- Tabs ---------- */
+        .tabs {
+            position: sticky; top: 0; z-index: 50;
+            display: flex; justify-content: center; gap: 10px;
+            background: var(--bg-color); padding: 14px 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.04);
+        }
+        .tab-btn {
+            font-family: 'Montserrat', sans-serif; font-size: 0.8rem; letter-spacing: 1px;
+            text-transform: uppercase; cursor: pointer; border: none; background: transparent;
+            color: var(--primary-color); padding: 8px 18px; border-radius: 30px; transition: all 0.25s;
+        }
+        .tab-btn.active { background: var(--primary-color); color: #fff; }
+
+        /* ---------- Layout ---------- */
+        main { max-width: 760px; margin: 0 auto; padding: 30px 18px 80px; }
+        .panel { display: none; }
+        .panel.active { display: block; }
+
+        .card {
+            background: var(--light-bg);
+            padding: 28px 22px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+            border-radius: 6px;
+        }
+
+        .lead { text-align: center; color: #555; margin-bottom: 22px; }
+
+        /* ---------- Upload ---------- */
+        .drop {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            border: 2px dashed #d8d4c8; border-radius: 8px;
+            padding: 44px 20px; text-align: center; cursor: pointer;
+            transition: border-color 0.25s, background 0.25s; background: #fcfbf8;
+        }
+        .drop:hover { border-color: var(--secondary-color); background: #fbf9f2; }
+        .drop .icon { font-size: 2.4rem; }
+        .drop .big { font-size: 1.05rem; color: var(--primary-color); margin-top: 8px; }
+        .drop .small { font-size: 0.8rem; color: #999; margin-top: 6px; }
+        #fileInput { display: none; }
+
+        .selected-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+            gap: 8px; margin-top: 18px;
+        }
+        .selected-grid .thumb {
+            position: relative; aspect-ratio: 1; border-radius: 6px; overflow: hidden;
+            background: #eee;
+        }
+        .selected-grid .thumb img, .selected-grid .thumb video { width: 100%; height: 100%; object-fit: cover; }
+        .selected-grid .thumb .badge {
+            position: absolute; bottom: 3px; right: 3px; background: rgba(0,0,0,0.6); color: #fff;
+            font-size: 0.6rem; padding: 1px 5px; border-radius: 3px;
+        }
+
+        .field { margin-top: 18px; }
+        .field label { display: block; font-size: 0.78rem; letter-spacing: 1px; text-transform: uppercase; color: #888; margin-bottom: 6px; }
+        .field input, .field textarea {
+            width: 100%; font-family: 'Montserrat', sans-serif; font-size: 0.95rem;
+            padding: 12px 14px; border: 1px solid #e2ddd0; border-radius: 6px; background: #fff; color: var(--text-color);
+        }
+        .field textarea { resize: vertical; min-height: 60px; }
+        .field input:focus, .field textarea:focus { outline: none; border-color: var(--secondary-color); }
+
+        .btn {
+            display: inline-block; width: 100%; margin-top: 22px; cursor: pointer;
+            font-family: 'Montserrat', sans-serif; font-size: 0.9rem; letter-spacing: 1.5px; text-transform: uppercase;
+            background: var(--primary-color); color: #fff; border: none; padding: 15px; border-radius: 30px;
+            transition: background 0.25s, opacity 0.25s;
+        }
+        .btn:hover { background: #5c6a56; }
+        .btn:disabled { opacity: 0.5; cursor: default; }
+
+        .progress-wrap { margin-top: 18px; display: none; }
+        .progress-wrap.show { display: block; }
+        .bar { height: 8px; background: #ece8dc; border-radius: 5px; overflow: hidden; }
+        .bar > span { display: block; height: 100%; width: 0; background: var(--secondary-color); transition: width 0.2s; }
+        .progress-text { text-align: center; font-size: 0.82rem; color: #888; margin-top: 8px; }
+
+        .toast {
+            position: fixed; left: 50%; bottom: 26px; transform: translate(-50%, 120%);
+            background: var(--primary-color); color: #fff; padding: 13px 24px; border-radius: 30px;
+            font-size: 0.85rem; box-shadow: 0 6px 18px rgba(0,0,0,0.18); transition: transform 0.35s; z-index: 200;
+            max-width: 90vw; text-align: center;
+        }
+        .toast.show { transform: translate(-50%, 0); }
+        .toast.err { background: #b0524a; }
+
+        /* ---------- Gallery ---------- */
+        .gallery-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+        .gallery-head h2 { font-size: 1.6rem; color: var(--primary-color); }
+        .count-pill { font-size: 0.75rem; background: #efece2; color: #8a8167; padding: 4px 12px; border-radius: 20px; }
+
+        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+        .g-item {
+            position: relative; aspect-ratio: 1; border-radius: 6px; overflow: hidden; cursor: pointer;
+            background: #eee; box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+        }
+        .g-item img, .g-item video { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .g-item .play { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 2rem; color: #fff; text-shadow: 0 1px 6px rgba(0,0,0,0.5); pointer-events: none; }
+        .g-item .cap {
+            position: absolute; left: 0; right: 0; bottom: 0; padding: 18px 8px 6px;
+            background: linear-gradient(transparent, rgba(0,0,0,0.65)); color: #fff; font-size: 0.72rem;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .empty { text-align: center; color: #aaa; padding: 50px 10px; }
+
+        /* ---------- Lightbox ---------- */
+        .lightbox { position: fixed; inset: 0; background: rgba(20,18,14,0.92); display: none; align-items: center; justify-content: center; z-index: 300; padding: 20px; }
+        .lightbox.show { display: flex; }
+        .lightbox .content { max-width: 92vw; max-height: 82vh; text-align: center; }
+        .lightbox img, .lightbox video { max-width: 92vw; max-height: 74vh; border-radius: 4px; }
+        .lightbox .lb-cap { color: #f3efe4; margin-top: 14px; font-family: 'Playfair Display', serif; font-style: italic; }
+        .lightbox .lb-name { color: var(--secondary-color); font-size: 0.8rem; letter-spacing: 1px; margin-top: 4px; }
+        .lightbox .close { position: absolute; top: 18px; right: 24px; color: #fff; font-size: 2rem; cursor: pointer; line-height: 1; }
+
+        footer { text-align: center; padding: 30px 20px 40px; color: #b6b0a0; font-size: 0.8rem; }
+        footer .heart { color: var(--secondary-color); }
+
+        @media (max-width: 480px) {
+            header .names { font-size: 1.8rem; }
+            .gallery-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="names">Vi Vien &amp; Khanh</div>
+        <div class="date">08 · 08 · 2026</div>
+        <p class="tagline" data-lang="en">Help us capture the day — share your photos &amp; videos</p>
+        <p class="tagline" data-lang="hu">Segíts megörökíteni a napot — oszd meg a fotóidat és videóidat</p>
+        <p class="tagline" data-lang="vi">Cùng chúng tôi lưu giữ ngày trọng đại — chia sẻ ảnh và video của bạn</p>
+        <div class="lang-switch">
+            <img src="https://flagcdn.com/w40/gb.png" alt="English" onclick="setLang('en')">
+            <img src="https://flagcdn.com/w40/hu.png" alt="Magyar" onclick="setLang('hu')">
+            <img src="https://flagcdn.com/w40/vn.png" alt="Tiếng Việt" onclick="setLang('vi')">
+        </div>
+    </header>
+
+    <div class="tabs">
+        <button class="tab-btn active" id="tab-upload" onclick="showTab('upload')">
+            <span data-lang="en">Share</span><span data-lang="hu">Megosztás</span><span data-lang="vi">Chia sẻ</span>
+        </button>
+        <button class="tab-btn" id="tab-gallery" onclick="showTab('gallery')">
+            <span data-lang="en">Gallery</span><span data-lang="hu">Galéria</span><span data-lang="vi">Thư viện</span>
+        </button>
+    </div>
+
+    <main>
+        <!-- ============ UPLOAD PANEL ============ -->
+        <section class="panel active" id="panel-upload">
+            <div class="card">
+                <p class="lead" data-lang="en">Take a photo or video right now, or pick from your gallery. Add a little note if you like!</p>
+                <p class="lead" data-lang="hu">Készíts most egy fotót vagy videót, vagy válassz a galériádból. Írj hozzá egy kis üzenetet, ha szeretnél!</p>
+                <p class="lead" data-lang="vi">Chụp ảnh hoặc quay video ngay bây giờ, hoặc chọn từ thư viện của bạn. Thêm một lời nhắn nếu bạn muốn!</p>
+
+                <label class="drop" for="fileInput" id="dropZone">
+                    <div class="icon">📸</div>
+                    <div class="big">
+                        <span data-lang="en">Tap to add photos &amp; videos</span>
+                        <span data-lang="hu">Koppints fotók és videók hozzáadásához</span>
+                        <span data-lang="vi">Chạm để thêm ảnh &amp; video</span>
+                    </div>
+                    <div class="small">
+                        <span data-lang="en">You can select several at once</span>
+                        <span data-lang="hu">Egyszerre többet is kiválaszthatsz</span>
+                        <span data-lang="vi">Bạn có thể chọn nhiều cùng lúc</span>
+                    </div>
+                </label>
+                <input type="file" id="fileInput" accept="image/*,video/*" multiple>
+
+                <div class="selected-grid" id="selectedGrid"></div>
+
+                <div class="field">
+                    <label>
+                        <span data-lang="en">Your name (optional)</span>
+                        <span data-lang="hu">A neved (nem kötelező)</span>
+                        <span data-lang="vi">Tên của bạn (không bắt buộc)</span>
+                    </label>
+                    <input type="text" id="guestName" maxlength="60" autocomplete="name">
+                </div>
+
+                <div class="field">
+                    <label>
+                        <span data-lang="en">Caption (optional)</span>
+                        <span data-lang="hu">Felirat (nem kötelező)</span>
+                        <span data-lang="vi">Chú thích (không bắt buộc)</span>
+                    </label>
+                    <textarea id="caption" maxlength="200" placeholder=""></textarea>
+                </div>
+
+                <button class="btn" id="uploadBtn" onclick="startUpload()" disabled>
+                    <span data-lang="en">Share with the couple</span>
+                    <span data-lang="hu">Megosztás a párral</span>
+                    <span data-lang="vi">Gửi tới cô dâu chú rể</span>
+                </button>
+
+                <div class="progress-wrap" id="progressWrap">
+                    <div class="bar"><span id="bar"></span></div>
+                    <div class="progress-text" id="progressText"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ GALLERY PANEL ============ -->
+        <section class="panel" id="panel-gallery">
+            <div class="gallery-head">
+                <h2>
+                    <span data-lang="en">Live Gallery</span>
+                    <span data-lang="hu">Élő galéria</span>
+                    <span data-lang="vi">Thư viện trực tiếp</span>
+                </h2>
+                <span class="count-pill" id="countPill">0</span>
+            </div>
+            <div class="gallery-grid" id="galleryGrid"></div>
+            <div class="empty" id="galleryEmpty">
+                <p data-lang="en">No memories yet — be the first to share! ✨</p>
+                <p data-lang="hu">Még nincsenek emlékek — légy te az első! ✨</p>
+                <p data-lang="vi">Chưa có kỷ niệm nào — hãy là người đầu tiên chia sẻ! ✨</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <span data-lang="en">Made with <span class="heart">♥</span> for Vi Vien &amp; Khanh</span>
+        <span data-lang="hu">Készült <span class="heart">♥</span>-el Vi Vien &amp; Khanh számára</span>
+        <span data-lang="vi">Thực hiện với <span class="heart">♥</span> cho Vi Vien &amp; Khanh</span>
+    </footer>
+
+    <!-- Lightbox -->
+    <div class="lightbox" id="lightbox" onclick="closeLightbox(event)">
+        <span class="close" onclick="closeLightbox(event, true)">&times;</span>
+        <div class="content" id="lightboxContent"></div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   CONFIG  —  set this to your deployed Cloudflare Worker URL.
+   e.g. "https://vk-memories.<your-subdomain>.workers.dev"
+   or a custom route like "https://api.vkunited.com"
+   ============================================================ */
+const API_BASE = "https://vk-memories.vkunited26.workers.dev";
+
+/* ---------- i18n (same mechanism as the main site) ---------- */
+function setLang(lang) {
+    document.querySelectorAll('[data-lang]').forEach(el => {
+        el.style.display = el.getAttribute('data-lang') === lang ? '' : 'none';
+    });
+    document.querySelectorAll('.lang-switch img').forEach(b => b.style.opacity = '0.6');
+    const active = document.querySelector(`[onclick="setLang('${lang}')"]`);
+    if (active) active.style.opacity = '1';
+    try { localStorage.setItem('vk_lang', lang); } catch (e) {}
+    document.documentElement.lang = lang;
+}
+
+/* ---------- Tabs ---------- */
+function showTab(name) {
+    document.getElementById('panel-upload').classList.toggle('active', name === 'upload');
+    document.getElementById('panel-gallery').classList.toggle('active', name === 'gallery');
+    document.getElementById('tab-upload').classList.toggle('active', name === 'upload');
+    document.getElementById('tab-gallery').classList.toggle('active', name === 'gallery');
+    if (name === 'gallery') loadGallery();
+}
+
+/* ---------- File selection ---------- */
+let selectedFiles = [];
+const MB = 1024 * 1024;
+const MAX_IMAGE_BYTES = 25 * MB;   // photos: 25 MB
+const MAX_VIDEO_BYTES = 200 * MB;  // videos: 200 MB (~1-2 min phone clip)
+
+function sizeLimitFor(file) { return (file.type || '').startsWith('video') ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES; }
+
+document.getElementById('fileInput').addEventListener('change', (e) => {
+    for (const f of e.target.files) {
+        if (f.size > sizeLimitFor(f)) {
+            showToast(tr(
+                `Too large: max 25 MB for photos, 200 MB for videos`,
+                `Túl nagy: max 25 MB fotóknál, 200 MB videóknál`,
+                `Quá lớn: tối đa 25 MB cho ảnh, 200 MB cho video`), true);
+            continue;
+        }
+        selectedFiles.push(f);
+    }
+    e.target.value = '';
+    renderSelected();
+});
+
+function renderSelected() {
+    const grid = document.getElementById('selectedGrid');
+    grid.innerHTML = '';
+    selectedFiles.forEach((f, i) => {
+        const div = document.createElement('div');
+        div.className = 'thumb';
+        const url = URL.createObjectURL(f);
+        if (f.type.startsWith('video')) {
+            div.innerHTML = `<video src="${url}" muted playsinline></video><span class="badge">▶</span>`;
+        } else {
+            div.innerHTML = `<img src="${url}"><span class="badge">${(f.size/1024/1024).toFixed(1)}M</span>`;
+        }
+        grid.appendChild(div);
+    });
+    document.getElementById('uploadBtn').disabled = selectedFiles.length === 0;
+}
+
+/* ---------- Upload ---------- */
+async function startUpload() {
+    if (!selectedFiles.length) return;
+    const name = document.getElementById('guestName').value.trim().slice(0, 60);
+    const caption = document.getElementById('caption').value.trim().slice(0, 200);
+    const btn = document.getElementById('uploadBtn');
+    const wrap = document.getElementById('progressWrap');
+    const bar = document.getElementById('bar');
+    const txt = document.getElementById('progressText');
+
+    btn.disabled = true;
+    wrap.classList.add('show');
+    let done = 0;
+    const total = selectedFiles.length;
+
+    for (const file of selectedFiles) {
+        txt.textContent = tr(`Uploading ${done + 1} of ${total}…`, `Feltöltés ${done + 1} / ${total}…`, `Đang tải lên ${done + 1} / ${total}…`);
+        try {
+            await uploadOne(file, name, caption, (pct) => {
+                const overall = ((done + pct / 100) / total) * 100;
+                bar.style.width = overall + '%';
+            });
+            done++;
+            bar.style.width = (done / total * 100) + '%';
+        } catch (err) {
+            console.error(err);
+            showToast(tr('Upload failed — please try again', 'A feltöltés sikertelen — próbáld újra', 'Tải lên thất bại — vui lòng thử lại'), true);
+            btn.disabled = false;
+            return;
+        }
+    }
+
+    txt.textContent = '';
+    wrap.classList.remove('show');
+    bar.style.width = '0';
+    selectedFiles = [];
+    renderSelected();
+    document.getElementById('caption').value = '';
+    showToast(tr('Thank you! 💛 Your memories are shared', 'Köszönjük! 💛 Az emlékeid megosztva', 'Cảm ơn bạn! 💛 Kỷ niệm của bạn đã được chia sẻ'));
+    showTab('gallery');
+}
+
+async function uploadOne(file, name, caption, onProgress) {
+    // 1) ask the Worker for a presigned upload URL
+    const signRes = await fetch(`${API_BASE}/api/sign`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename: file.name, contentType: file.type || 'application/octet-stream', size: file.size })
+    });
+    if (!signRes.ok) throw new Error('sign failed: ' + signRes.status);
+    const { url, key, id, publicUrl } = await signRes.json();
+
+    // 2) PUT the file straight to R2 (with progress)
+    await putWithProgress(url, file, onProgress);
+
+    // 3) tell the Worker to record the metadata
+    const completeRes = await fetch(`${API_BASE}/api/complete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            id, key, publicUrl,
+            type: file.type.startsWith('video') ? 'video' : 'image',
+            contentType: file.type || 'application/octet-stream',
+            name, caption
+        })
+    });
+    if (!completeRes.ok) throw new Error('complete failed: ' + completeRes.status);
+}
+
+function putWithProgress(url, file, onProgress) {
+    return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('PUT', url);
+        if (file.type) xhr.setRequestHeader('Content-Type', file.type);
+        xhr.upload.onprogress = (e) => { if (e.lengthComputable) onProgress(e.loaded / e.total * 100); };
+        xhr.onload = () => (xhr.status >= 200 && xhr.status < 300) ? resolve() : reject(new Error('PUT ' + xhr.status));
+        xhr.onerror = () => reject(new Error('network error'));
+        xhr.send(file);
+    });
+}
+
+/* ---------- Gallery ---------- */
+let galleryTimer = null;
+async function loadGallery() {
+    try {
+        const res = await fetch(`${API_BASE}/api/gallery`);
+        if (!res.ok) throw new Error(res.status);
+        const items = await res.json();
+        renderGallery(items);
+    } catch (e) {
+        console.error('gallery load failed', e);
+    }
+    // poll while the gallery tab is open
+    clearTimeout(galleryTimer);
+    if (document.getElementById('panel-gallery').classList.contains('active')) {
+        galleryTimer = setTimeout(loadGallery, 8000);
+    }
+}
+
+function renderGallery(items) {
+    const grid = document.getElementById('galleryGrid');
+    const empty = document.getElementById('galleryEmpty');
+    document.getElementById('countPill').textContent = items.length;
+    if (!items.length) { grid.innerHTML = ''; empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    grid.innerHTML = items.map((it, i) => {
+        const cap = it.caption ? `<div class="cap">${escapeHtml(it.caption)}</div>` : '';
+        if (it.type === 'video') {
+            return `<div class="g-item" onclick='openLightbox(${i})'>
+                        <video src="${it.url}#t=0.1" muted playsinline preload="metadata"></video>
+                        <div class="play">▶</div>${cap}
+                    </div>`;
+        }
+        return `<div class="g-item" onclick='openLightbox(${i})'>
+                    <img src="${it.url}" loading="lazy">${cap}
+                </div>`;
+    }).join('');
+    window._gallery = items;
+}
+
+/* ---------- Lightbox ---------- */
+function openLightbox(i) {
+    const it = window._gallery[i];
+    const c = document.getElementById('lightboxContent');
+    const media = it.type === 'video'
+        ? `<video src="${it.url}" controls autoplay playsinline></video>`
+        : `<img src="${it.url}">`;
+    const cap = it.caption ? `<div class="lb-cap">“${escapeHtml(it.caption)}”</div>` : '';
+    const nm = it.name ? `<div class="lb-name">— ${escapeHtml(it.name)}</div>` : '';
+    c.innerHTML = media + cap + nm;
+    document.getElementById('lightbox').classList.add('show');
+}
+function closeLightbox(e, force) {
+    if (force || e.target.id === 'lightbox') {
+        document.getElementById('lightbox').classList.remove('show');
+        document.getElementById('lightboxContent').innerHTML = '';
+    }
+}
+
+/* ---------- helpers ---------- */
+function tr(en, hu, vi) { const l = localStorage.getItem('vk_lang') || 'en'; return l === 'hu' ? hu : l === 'vi' ? vi : en; }
+function escapeHtml(s) { return (s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+let toastTimer;
+function showToast(msg, isErr) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.toggle('err', !!isErr); t.classList.add('show');
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+/* ---------- init ---------- */
+setLang(localStorage.getItem('vk_lang') || 'en');
+</script>
+</body>
+</html>
