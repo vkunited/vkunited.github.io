@@ -81,7 +81,7 @@
   </div>
 </header>
 
-<main><svg id="plan" viewBox="80 20 740 1740"></svg></main>
+<main><svg id="plan" viewBox="80 20 740 1900"></svg></main>
 
 <div id="overlay">
   <div id="dialog">
@@ -120,12 +120,14 @@
   var TW = 116, TH = 80, CR = 13;
   var ROW0 = 380, ROWSTEP = 196.7;
   var TABLES = [];
-  // right column, top to bottom: 1..7
-  for (var i=0;i<7;i++) TABLES.push({id:i+1, cx:690, cy: ROW0 + i*ROWSTEP});
-  // left column, top to bottom: 13,12,11,10,9,8
-  for (var j=0;j<6;j++) TABLES.push({id:13-j, cx:210, cy: ROW0 + (j+1)*ROWSTEP});
+  // right column, top to bottom: 1..7 then new empty 14 at bottom-right
+  var rightIds = [1,2,3,4,5,6,7,14];
+  for (var i=0;i<8;i++) TABLES.push({id:rightIds[i], cx:690, cy: ROW0 + i*ROWSTEP});
+  // left column, top to bottom: 13,12,11,10,9,8 — aligned to rows 3..8 of the right column
+  var leftIds = [13,12,11,10,9,8];
+  for (var j=0;j<6;j++) TABLES.push({id:leftIds[j], cx:210, cy: ROW0 + (j+2)*ROWSTEP});
   // bride & groom table, bottom centre, 2 seats
-  TABLES.push({id:"BG", cx:450, cy: ROW0 + 6*ROWSTEP, bg:true});
+  TABLES.push({id:"BG", cx:450, cy: ROW0 + 7*ROWSTEP, bg:true});
 
   function seatPositions(t){
     var x=t.cx-TW/2, y=t.cy-TH/2, s=[], k;
@@ -303,11 +305,11 @@
   }
 
   // Static scenery
-  plan.appendChild(el("rect",{x:100,y:40,width:700,height:1660,fill:"#FBF8F1",stroke:"#3E2A1B","stroke-width":4,rx:6}));
+  plan.appendChild(el("rect",{x:100,y:40,width:700,height:1850,fill:"#FBF8F1",stroke:"#3E2A1B","stroke-width":4,rx:6}));
   // dancefloor
-  plan.appendChild(el("rect",{x:330,y:400,width:240,height:1050,fill:"#E8C98F",stroke:"#C9985A","stroke-width":3,rx:4}));
-  plan.appendChild(el("text",{x:450,y:925,"font-size":24,fill:"#7A4E2D","text-anchor":"middle",
-    transform:"rotate(-90 450 925)","letter-spacing":4},"DANCEFLOOR"));
+  plan.appendChild(el("rect",{x:330,y:400,width:240,height:1430,fill:"#E8C98F",stroke:"#C9985A","stroke-width":3,rx:4}));
+  plan.appendChild(el("text",{x:450,y:1115,"font-size":24,fill:"#7A4E2D","text-anchor":"middle",
+    transform:"rotate(-90 450 1115)","letter-spacing":4},"DANCEFLOOR"));
   // DJ booth, top middle
   plan.appendChild(el("rect",{x:360,y:160,width:180,height:90,fill:"#FBEEC2",stroke:"#C8A415","stroke-width":2.5,rx:4}));
   plan.appendChild(el("text",{x:450,y:212,"font-size":17,"font-weight":700,fill:"#8A6D0A","text-anchor":"middle"},"DJ BOOTH"));
