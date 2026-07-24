@@ -73,6 +73,9 @@
   <div class="toolbar">
     <input id="search" placeholder="Find a guest…">
     <button id="btnCopy">Copy guest list</button>
+    <button id="btnPublish">Sign in to edit</button>
+    <button id="btnDiscard" style="display:none">Discard changes</button>
+    <button id="btnSignout" style="display:none">Sign out</button>
     <button id="btnShare">Copy shareable link</button>
     <button id="btnExport">Export file</button>
     <button id="btnImport">Import file</button>
@@ -201,14 +204,38 @@
     return btoa(unescape(encodeURIComponent(JSON.stringify(obj)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
   }
 
+  function b64std(str){ return btoa(unescape(encodeURIComponent(str))); }
+
+  // ---- shared state config (lives in the repo) ----
+  var REPO = "vkunited/vkunited.github.io";
+  var REMOTE_PATH = "seatingchart/seating.json";
+  var TOKEN_KEY = "wedding-seating-token";
+  var DIRTY_KEY = KEY + ":dirty";
+
   var names = {};
+  var dirty = localStorage.getItem(DIRTY_KEY) === "1";
   var fromLink = null;
   if (location.hash.indexOf("#data=") === 0) fromLink = decodeData(location.hash.slice(6));
   if (fromLink) {
     names = fromLink;
   } else {
     try { names = JSON.parse(localStorage.getItem(KEY) || "null"); } catch(e){ names = null; }
-    if (!names) names = JSON.parse(JSON.stringify(DEFAULT_NAMES));
+    if (!names) { names = JSON.parse(JSON.stringify(DEFAULT_NAMES)); dirty = false; }
+  }
+
+  function syncFromRepo(){
+    if (fromLink) return;
+    fetch("./seating.json?v=" + Date.now(), {cache:"no-store"})
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(remote){
+        if (!remote || typeof remote !== "object") return;
+        if (dirty) { showBanner("You have unpublished changes — publish them or discard to load the latest"); return; }
+        names = remote;
+        try { localStorage.setItem(KEY, JSON.stringify(names)); } catch(e){}
+        refresh();
+        flash("Up to date");
+      })
+      .catch(function(){ /* offline — keep whatever we have */ });
   }
 
   var svgNS = "http://www.w3.org/2000/svg";
@@ -337,6 +364,9 @@
   function save(){
     try {
       localStorage.setItem(KEY, JSON.stringify(names));
+      dirty = true;
+      localStorage.setItem(DIRTY_KEY, "1");
+      updatePublishState();
       flash("Saved ✓");
     } catch(e){ flash("Save failed"); }
   }
@@ -483,7 +513,74 @@
     e.target.value = "";
   });
 
+  // ---- publishing to the repo (editor only) ----
+  function getToken(){ try { return localStorage.getItem(TOKEN_KEY) || ""; } catch(e){ return ""; } }
+  function updatePublishState(){
+    var btn = document.getElementById("btnPublish");
+    var out = document.getElementById("btnSignout");
+    var has = !!getToken();
+    btn.textContent = has ? (dirty ? "Publish changes ●" : "Published ✓") : "Sign in to edit";
+    btn.style.opacity = (has && !dirty) ? 0.6 : 1;
+    out.style.display = has ? "inline-block" : "none";
+    document.getElementById("btnDiscard").style.display = dirty ? "inline-block" : "none";
+  }
+
+  document.getElementById("btnSignout").addEventListener("click", function(){
+    try { localStorage.removeItem(TOKEN_KEY); } catch(e){}
+    updatePublishState(); flash("Signed out");
+  });
+
+  document.getElementById("btnDiscard").addEventListener("click", function(){
+    if (!confirm("Discard your unpublished changes and load the saved seating?")) return;
+    dirty = false;
+    try { localStorage.removeItem(DIRTY_KEY); localStorage.removeItem(KEY); } catch(e){}
+    hideBanner(); updatePublishState(); syncFromRepo();
+  });
+
+  document.getElementById("btnPublish").addEventListener("click", function(){
+    var token = getToken();
+    if (!token) {
+      token = prompt("Paste your GitHub token to enable saving.\n\nOnly you need this — it stays on this device and is never part of the page.");
+      if (!token) return;
+      token = token.trim();
+      try { localStorage.setItem(TOKEN_KEY, token); } catch(e){}
+      updatePublishState();
+    }
+    if (!dirty) { flash("Nothing to publish"); return; }
+    publish(token);
+  });
+
+  function publish(token){
+    var api = "https://api.github.com/repos/" + REPO + "/contents/" + REMOTE_PATH;
+    var hdr = {"Authorization":"Bearer "+token, "Accept":"application/vnd.github+json"};
+    flash("Publishing…");
+    fetch(api + "?ref=main", {headers:hdr, cache:"no-store"})
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(cur){
+        var body = {message:"Update seating chart", content: b64std(JSON.stringify(names, null, 2))};
+        if (cur && cur.sha) body.sha = cur.sha;
+        return fetch(api, {method:"PUT", headers:hdr, body: JSON.stringify(body)});
+      })
+      .then(function(r){
+        if (r.ok) {
+          dirty = false;
+          try { localStorage.removeItem(DIRTY_KEY); } catch(e){}
+          updatePublishState(); hideBanner();
+          flash("Published ✓ live in ~1 min");
+        } else if (r.status === 401 || r.status === 403) {
+          try { localStorage.removeItem(TOKEN_KEY); } catch(e){}
+          updatePublishState();
+          flash("Token rejected — sign in again");
+        } else {
+          flash("Publish failed (" + r.status + ")");
+        }
+      })
+      .catch(function(){ flash("Publish failed — check connection"); });
+  }
+
   refresh();
+  updatePublishState();
+  syncFromRepo();
   if (fromLink) {
     flash("Loaded from link");
     save();
