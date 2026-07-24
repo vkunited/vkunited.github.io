@@ -17,7 +17,7 @@
   .toolbar button { padding:6px 12px; border-radius:6px; border:1px solid #C9985A; background:transparent;
                     color:#F5F1E8; cursor:pointer; font-family:system-ui,sans-serif; font-size:13px; }
   .toolbar button:hover { background:rgba(201,152,90,.2); }
-  #status { font-size:12px; font-family:system-ui,sans-serif; opacity:.8; min-width:60px; }
+  #status { font-size:12px; font-family:system-ui,sans-serif; opacity:.9; min-width:150px; }
   main { max-width:980px; margin:0 auto; padding:16px 8px 60px; }
   svg { width:100%; height:auto; display:block; }
   .seat { cursor:pointer; }
@@ -73,9 +73,6 @@
   <div class="toolbar">
     <input id="search" placeholder="Find a guest…">
     <button id="btnCopy">Copy guest list</button>
-    <button id="btnPublish">Sign in to edit</button>
-    <button id="btnDiscard" style="display:none">Discard changes</button>
-    <button id="btnSignout" style="display:none">Sign out</button>
     <button id="btnShare">Copy shareable link</button>
     <button id="btnExport">Export file</button>
     <button id="btnImport">Import file</button>
@@ -206,36 +203,94 @@
 
   function b64std(str){ return btoa(unescape(encodeURIComponent(str))); }
 
-  // ---- shared state config (lives in the repo) ----
-  var REPO = "vkunited/vkunited.github.io";
-  var REMOTE_PATH = "seatingchart/seating.json";
-  var TOKEN_KEY = "wedding-seating-token";
-  var DIRTY_KEY = KEY + ":dirty";
+  // ---- shared storage (Supabase) ----
+  var SB_URL = "https://fnedrqzrzcwdzmmvxwxi.supabase.co";
+  var SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZuZWRycXpyemN3ZHptbXZ4d3hpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4NTU1MDcsImV4cCI6MjEwMDQzMTUwN30.Qpan5njYkqbbdzvWxncpk_HNyDkadsXBzu2z8R55RbE";
+  var SB_ROW = SB_URL + "/rest/v1/seating?id=eq.main";
+  function sbHeaders(extra){
+    var h = {"apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY, "Content-Type": "application/json"};
+    for (var k in (extra||{})) h[k] = extra[k];
+    return h;
+  }
 
   var names = {};
-  var dirty = localStorage.getItem(DIRTY_KEY) === "1";
+  var remoteStamp = null;      // updated_at we last saw from the server
+  var saveTimer = null;
+  var pendingSave = false;
+
   var fromLink = null;
   if (location.hash.indexOf("#data=") === 0) fromLink = decodeData(location.hash.slice(6));
   if (fromLink) {
     names = fromLink;
   } else {
     try { names = JSON.parse(localStorage.getItem(KEY) || "null"); } catch(e){ names = null; }
-    if (!names) { names = JSON.parse(JSON.stringify(DEFAULT_NAMES)); dirty = false; }
+    if (!names) names = JSON.parse(JSON.stringify(DEFAULT_NAMES));
   }
 
-  function syncFromRepo(){
-    if (fromLink) return;
-    fetch("./seating.json?v=" + Date.now(), {cache:"no-store"})
-      .then(function(r){ return r.ok ? r.json() : null; })
-      .then(function(remote){
-        if (!remote || typeof remote !== "object") return;
-        if (dirty) { showBanner("You have unpublished changes — publish them or discard to load the latest"); return; }
-        names = remote;
-        try { localStorage.setItem(KEY, JSON.stringify(names)); } catch(e){}
-        refresh();
-        flash("Up to date");
+  function editing(){ return document.getElementById("overlay").classList.contains("open")
+      || document.getElementById("dataOverlay").classList.contains("open"); }
+
+  function setStatus(msg, cls){
+    var s = document.getElementById("status");
+    s.textContent = msg;
+    s.style.color = cls === "err" ? "#F3B0B0" : (cls === "ok" ? "#BFE3B4" : "#F5F1E8");
+  }
+
+  // Pull the shared chart from the server
+  function pull(initial){
+    return fetch(SB_ROW + "&select=data,updated_at", {headers: sbHeaders(), cache:"no-store"})
+      .then(function(r){
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
       })
-      .catch(function(){ /* offline — keep whatever we have */ });
+      .then(function(rows){
+        if (!rows || !rows.length) throw new Error("no row");
+        var row = rows[0];
+        var remote = row.data && typeof row.data === "object" ? row.data : {};
+        // first-ever run: seed the server with the built-in chart
+        if (initial && Object.keys(remote).length === 0 && Object.keys(names).length > 0) {
+          return pushRemote(true);
+        }
+        remoteStamp = row.updated_at;
+        if (pendingSave) return;                       // don't stomp edits being saved
+        if (JSON.stringify(remote) !== JSON.stringify(names)) {
+          names = remote;
+          try { localStorage.setItem(KEY, JSON.stringify(names)); } catch(e){}
+          refresh();
+          if (!initial) flash("Updated by someone else");
+        }
+        setStatus("Saved for everyone ✓", "ok");
+      })
+      .catch(function(e){
+        setStatus(String(e.message).indexOf("no row") > -1 ? "Setup incomplete — run the SQL" : "Offline — changes not shared", "err");
+      });
+  }
+
+  // Push our chart to the server
+  function pushRemote(seeding){
+    pendingSave = true;
+    setStatus("Saving…");
+    return fetch(SB_ROW, {
+      method: "PATCH",
+      headers: sbHeaders({"Prefer":"return=representation"}),
+      body: JSON.stringify({data: names, updated_at: new Date().toISOString()})
+    })
+      .then(function(r){
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      })
+      .then(function(rows){
+        if (rows && rows.length) remoteStamp = rows[0].updated_at;
+        setStatus(seeding ? "Chart published ✓" : "Saved for everyone ✓", "ok");
+      })
+      .catch(function(){ setStatus("Not saved — check connection", "err"); })
+      .then(function(){ pendingSave = false; });
+  }
+
+  function scheduleRemoteSave(){
+    clearTimeout(saveTimer);
+    setStatus("Saving…");
+    saveTimer = setTimeout(pushRemote, 600);
   }
 
   var svgNS = "http://www.w3.org/2000/svg";
@@ -362,13 +417,8 @@
   }
 
   function save(){
-    try {
-      localStorage.setItem(KEY, JSON.stringify(names));
-      dirty = true;
-      localStorage.setItem(DIRTY_KEY, "1");
-      updatePublishState();
-      flash("Saved ✓");
-    } catch(e){ flash("Save failed"); }
+    try { localStorage.setItem(KEY, JSON.stringify(names)); } catch(e){}
+    scheduleRemoteSave();
   }
   var flashTimer;
   function flash(msg){
@@ -513,78 +563,20 @@
     e.target.value = "";
   });
 
-  // ---- publishing to the repo (editor only) ----
-  function getToken(){ try { return localStorage.getItem(TOKEN_KEY) || ""; } catch(e){ return ""; } }
-  function updatePublishState(){
-    var btn = document.getElementById("btnPublish");
-    var out = document.getElementById("btnSignout");
-    var has = !!getToken();
-    btn.textContent = has ? (dirty ? "Publish changes ●" : "Published ✓") : "Sign in to edit";
-    btn.style.opacity = (has && !dirty) ? 0.6 : 1;
-    out.style.display = has ? "inline-block" : "none";
-    document.getElementById("btnDiscard").style.display = dirty ? "inline-block" : "none";
-  }
-
-  document.getElementById("btnSignout").addEventListener("click", function(){
-    try { localStorage.removeItem(TOKEN_KEY); } catch(e){}
-    updatePublishState(); flash("Signed out");
-  });
-
-  document.getElementById("btnDiscard").addEventListener("click", function(){
-    if (!confirm("Discard your unpublished changes and load the saved seating?")) return;
-    dirty = false;
-    try { localStorage.removeItem(DIRTY_KEY); localStorage.removeItem(KEY); } catch(e){}
-    hideBanner(); updatePublishState(); syncFromRepo();
-  });
-
-  document.getElementById("btnPublish").addEventListener("click", function(){
-    var token = getToken();
-    if (!token) {
-      token = prompt("Paste your GitHub token to enable saving.\n\nOnly you need this — it stays on this device and is never part of the page.");
-      if (!token) return;
-      token = token.trim();
-      try { localStorage.setItem(TOKEN_KEY, token); } catch(e){}
-      updatePublishState();
-    }
-    if (!dirty) { flash("Nothing to publish"); return; }
-    publish(token);
-  });
-
-  function publish(token){
-    var api = "https://api.github.com/repos/" + REPO + "/contents/" + REMOTE_PATH;
-    var hdr = {"Authorization":"Bearer "+token, "Accept":"application/vnd.github+json"};
-    flash("Publishing…");
-    fetch(api + "?ref=main", {headers:hdr, cache:"no-store"})
-      .then(function(r){ return r.ok ? r.json() : null; })
-      .then(function(cur){
-        var body = {message:"Update seating chart", content: b64std(JSON.stringify(names, null, 2))};
-        if (cur && cur.sha) body.sha = cur.sha;
-        return fetch(api, {method:"PUT", headers:hdr, body: JSON.stringify(body)});
-      })
-      .then(function(r){
-        if (r.ok) {
-          dirty = false;
-          try { localStorage.removeItem(DIRTY_KEY); } catch(e){}
-          updatePublishState(); hideBanner();
-          flash("Published ✓ live in ~1 min");
-        } else if (r.status === 401 || r.status === 403) {
-          try { localStorage.removeItem(TOKEN_KEY); } catch(e){}
-          updatePublishState();
-          flash("Token rejected — sign in again");
-        } else {
-          flash("Publish failed (" + r.status + ")");
-        }
-      })
-      .catch(function(){ flash("Publish failed — check connection"); });
-  }
-
+  // ---- start up: load the shared chart, then keep it in sync ----
   refresh();
-  updatePublishState();
-  syncFromRepo();
   if (fromLink) {
     flash("Loaded from link");
     save();
+  } else {
+    setStatus("Loading…");
+    pull(true);
   }
+  // pick up other people's edits
+  setInterval(function(){ if (!pendingSave && !editing()) pull(false); }, 8000);
+  document.addEventListener("visibilitychange", function(){
+    if (!document.hidden && !pendingSave) pull(false);
+  });
 })();
 </script>
 </body>
