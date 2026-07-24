@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wedding Seating Chart</title>
+<style>
+  body { margin:0; font-family: Georgia, 'Times New Roman', serif; background:#F5F1E8; color:#3E2A1B; }
+  header { position:sticky; top:0; z-index:10; background:#3E2A1B; color:#F5F1E8; padding:12px 18px;
+           display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  header h1 { font-size:20px; margin:0; letter-spacing:1px; font-weight:normal; }
+  .count { font-size:13px; opacity:.85; font-family:system-ui,sans-serif; }
+  .spacer { flex:1; }
+  .toolbar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .toolbar input { padding:6px 10px; border-radius:6px; border:1px solid #7A4E2D; background:#F5F1E8;
+                   color:#3E2A1B; font-size:14px; width:150px; font-family:inherit; }
+  .toolbar button { padding:6px 12px; border-radius:6px; border:1px solid #C9985A; background:transparent;
+                    color:#F5F1E8; cursor:pointer; font-family:system-ui,sans-serif; font-size:13px; }
+  .toolbar button:hover { background:rgba(201,152,90,.2); }
+  #status { font-size:12px; font-family:system-ui,sans-serif; opacity:.8; min-width:60px; }
+  main { max-width:980px; margin:0 auto; padding:16px 8px 60px; }
+  svg { width:100%; height:auto; display:block; }
+  .seat { cursor:pointer; }
+  .seat:hover circle { stroke-width:3; }
+  .seat:focus { outline:none; }
+  .seat:focus circle { stroke:#B33A3A; stroke-width:3; }
+  #overlay { position:fixed; inset:0; background:rgba(62,42,27,.45); z-index:20;
+             display:none; align-items:center; justify-content:center; }
+  #overlay.open { display:flex; }
+  #dialog { background:#FBF8F1; border-radius:10px; padding:20px 24px; width:300px;
+            box-shadow:0 12px 40px rgba(0,0,0,.25); border:1px solid #C9985A; }
+  #dialog h2 { font-size:17px; margin:0 0 10px; font-weight:normal; }
+  #dialog input { width:100%; box-sizing:border-box; padding:10px 12px; font-size:15px; border-radius:6px;
+                  border:1.5px solid #7A4E2D; background:#fff; font-family:system-ui,sans-serif; }
+  #dialog .actions { display:flex; gap:8px; margin-top:14px; justify-content:flex-end; font-family:system-ui,sans-serif; }
+  #dialog .actions button { padding:7px 12px; border-radius:6px; font-size:13px; cursor:pointer; }
+  #btnClear { border:1px solid #B33A3A; background:transparent; color:#B33A3A; display:none; }
+  #btnMove  { border:1px solid #7A4E2D; background:transparent; color:#7A4E2D; display:none; }
+  #btnSave  { border:none; background:#7A4E2D; color:#F5F1E8; }
+  #banner { position:fixed; left:50%; transform:translateX(-50%); bottom:18px; z-index:30;
+            background:#7A4E2D; color:#F5F1E8; padding:10px 16px; border-radius:8px;
+            font-family:system-ui,sans-serif; font-size:14px; display:none; align-items:center; gap:12px;
+            box-shadow:0 6px 24px rgba(0,0,0,.3); }
+  #banner.open { display:flex; }
+  #banner button { border:1px solid #C9985A; background:transparent; color:#F5F1E8;
+                   border-radius:6px; padding:4px 10px; cursor:pointer; font-size:13px; }
+  .tablelabel { cursor:pointer; }
+  .tablelabel:hover { opacity:.7; }
+  #dataOverlay { position:fixed; inset:0; background:rgba(62,42,27,.45); z-index:25;
+                 display:none; align-items:center; justify-content:center; }
+  #dataOverlay.open { display:flex; }
+  #dataDialog { background:#FBF8F1; border-radius:10px; padding:20px 24px; width:min(480px, 90vw);
+                box-shadow:0 12px 40px rgba(0,0,0,.25); border:1px solid #C9985A; }
+  #dataDialog h2 { font-size:17px; margin:0 0 8px; font-weight:normal; }
+  #dataDialog textarea { width:100%; box-sizing:border-box; font-family:monospace; font-size:12px;
+                         border:1.5px solid #7A4E2D; border-radius:6px; padding:8px; background:#fff; resize:vertical; }
+  #dataDialog .actions button { padding:7px 12px; border-radius:6px; font-size:13px; cursor:pointer;
+                                border:1px solid #7A4E2D; background:transparent; color:#7A4E2D; }
+  #dataDialog .actions #dataLoad, #dataDialog .actions #dataDownload, #dataDialog .actions #dataCopy
+    { background:#7A4E2D; color:#F5F1E8; border:none; }
+  @media print { header { display:none; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Seating Chart</h1>
+  <span class="count" id="count">0 of 112 seats named</span>
+  <span class="count" style="display:flex;align-items:center;gap:12px">
+    <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:50%;background:#DDEBD8;border:2px solid #6E9E63;display:inline-block"></span>free</span>
+    <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:50%;background:#B33A3A;border:2px solid #B33A3A;display:inline-block"></span>taken</span>
+  </span>
+  <span class="spacer"></span>
+  <div class="toolbar">
+    <input id="search" placeholder="Find a guest…">
+    <button id="btnCopy">Copy guest list</button>
+    <button id="btnShare">Copy shareable link</button>
+    <button id="btnExport">Export file</button>
+    <button id="btnImport">Import file</button>
+    <input type="file" id="fileInput" accept=".json" style="display:none">
+    <span id="status"></span>
+  </div>
+</header>
+
+<main><svg id="plan" viewBox="80 20 740 1700"></svg></main>
+
+<div id="overlay">
+  <div id="dialog">
+    <h2 id="dlgTitle">Seat</h2>
+    <input id="dlgInput" placeholder="Guest name">
+    <div class="actions">
+      <button id="btnClear">Clear seat</button>
+      <button id="btnMove">Move / swap</button>
+      <button id="btnSave">Save name</button>
+    </div>
+  </div>
+</div>
+
+<div id="banner">
+  <span id="bannerText"></span>
+  <button id="bannerCancel">Cancel</button>
+</div>
+
+<div id="dataOverlay">
+  <div id="dataDialog">
+    <h2 id="dataTitle">Your save data</h2>
+    <p id="dataHint" style="font-size:13px;font-family:system-ui,sans-serif;margin:0 0 8px;opacity:.8"></p>
+    <textarea id="dataText" rows="8" spellcheck="false"></textarea>
+    <div class="actions" style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end;font-family:system-ui,sans-serif">
+      <button id="dataClose">Close</button>
+      <button id="dataCopy" style="display:none">Copy save data</button>
+      <button id="dataDownload" style="display:none">Download file</button>
+      <button id="dataLoad" style="display:none">Load this data</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var KEY = "wedding-seating-v1";
+  var TW = 116, TH = 80, CR = 13;
+  var TABLES = [];
+  var topY = 300, bottomY = 1500, n = 7, slot = (bottomY - topY)/(n-1);
+  for (var i=0;i<n;i++) TABLES.push({id:i+1,  cx:210, cy: topY+i*slot});
+  for (var j=0;j<n;j++) TABLES.push({id:j+8,  cx:690, cy: topY+j*slot});
+  // columns removed
+
+  function seatPositions(t){
+    var x=t.cx-TW/2, y=t.cy-TH/2, s=[], k;
+    for(k=0;k<3;k++) s.push({key:"T"+k, x:x+TW*(k+0.5)/3, y:y-22, side:"top"});
+    for(k=0;k<3;k++) s.push({key:"B"+k, x:x+TW*(k+0.5)/3, y:y+TH+22, side:"bottom"});
+    s.push({key:"L", x:x-22, y:t.cy, side:"left"});
+    s.push({key:"R", x:x+TW+22, y:t.cy, side:"right"});
+    return s;
+  }
+
+  // Baked-in starting chart (edit DEFAULT_NAMES to ship a default seating with the page)
+  var DEFAULT_NAMES = {};
+
+  function decodeData(str){
+    try { return JSON.parse(decodeURIComponent(escape(atob(str.replace(/-/g,'+').replace(/_/g,'/'))))); }
+    catch(e){ return null; }
+  }
+  function encodeData(obj){
+    return btoa(unescape(encodeURIComponent(JSON.stringify(obj)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  }
+
+  var names = {};
+  var fromLink = null;
+  if (location.hash.indexOf("#data=") === 0) fromLink = decodeData(location.hash.slice(6));
+  if (fromLink) {
+    names = fromLink;
+  } else {
+    try { names = JSON.parse(localStorage.getItem(KEY) || "null"); } catch(e){ names = null; }
+    if (!names) names = JSON.parse(JSON.stringify(DEFAULT_NAMES));
+  }
+
+  var svgNS = "http://www.w3.org/2000/svg";
+  var plan = document.getElementById("plan");
+  function el(tag, attrs, text){
+    var e = document.createElementNS(svgNS, tag);
+    for (var a in attrs) e.setAttribute(a, attrs[a]);
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  // Static scenery
+  plan.appendChild(el("rect",{x:100,y:40,width:700,height:1620,fill:"#FBF8F1",stroke:"#3E2A1B","stroke-width":4,rx:6}));
+  plan.appendChild(el("rect",{x:334,y:230,width:232,height:1330,fill:"#E8C98F",stroke:"#C9985A","stroke-width":3,rx:4}));
+  var dfText = el("text",{x:450,y:895,"font-size":24,fill:"#7A4E2D","text-anchor":"middle",
+    transform:"rotate(-90 450 895)","letter-spacing":4},"DANCEFLOOR");
+  plan.appendChild(dfText);
+  // (columns removed per request)
+  plan.appendChild(el("rect",{x:380,y:120,width:140,height:70,fill:"#FBEEC2",stroke:"#C8A415","stroke-width":2.5,rx:4}));
+  plan.appendChild(el("text",{x:450,y:160,"font-size":15,"font-weight":700,fill:"#8A6D0A","text-anchor":"middle"},"DJ BOOTH"));
+  plan.appendChild(el("line",{x1:400,y1:1660,x2:500,y2:1660,stroke:"#FBF8F1","stroke-width":8}));
+  plan.appendChild(el("line",{x1:400,y1:1660,x2:500,y2:1660,stroke:"#3E2A1B","stroke-width":3,"stroke-dasharray":"6,5"}));
+  plan.appendChild(el("text",{x:450,y:1686,"font-size":14,fill:"#3E2A1B","text-anchor":"middle",
+    "font-family":"system-ui,sans-serif"},"Main entrance"));
+
+  // Seats
+  var seatNodes = {};
+  var tableLabels = {};
+  TABLES.forEach(function(t){
+    var x=t.cx-TW/2, y=t.cy-TH/2;
+    plan.appendChild(el("rect",{x:x,y:y,width:TW,height:TH,fill:"#FFFFFF",stroke:"#7A4E2D","stroke-width":2,rx:3}));
+    var lbl = el("text",{x:t.cx,y:t.cy+5,"font-size":16,"font-weight":700,fill:"#7A4E2D",
+      "text-anchor":"middle",class:"tablelabel"},String(t.id));
+    var hitbox = el("rect",{x:t.cx-20,y:t.cy-16,width:40,height:32,fill:"transparent",class:"tablelabel"});
+    plan.appendChild(lbl); plan.appendChild(hitbox);
+    tableLabels[t.id] = lbl;
+    hitbox.addEventListener("click", function(){ onTableClick(t.id); });
+    seatPositions(t).forEach(function(s){
+      var id = t.id + "-" + s.key;
+      var g = el("g",{class:"seat",tabindex:0,role:"button"});
+      var c = el("circle",{cx:s.x,cy:s.y,r:CR,fill:"#DDEBD8",stroke:"#6E9E63","stroke-width":2});
+      var labelY = s.side==="top" ? s.y-18 : s.y+26;
+      var label = el("text",{x:s.x,y:labelY,"font-size":11,fill:"#3E2A1B","text-anchor":"middle",
+        "font-family":"system-ui,sans-serif","pointer-events":"none"},"");
+      g.appendChild(c); g.appendChild(label);
+      g.addEventListener("click", function(){ onSeatClick(id, t.id, s.key); });
+      g.addEventListener("keydown", function(ev){ if(ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); onSeatClick(id, t.id, s.key);} });
+      plan.appendChild(g);
+      seatNodes[id] = {circle:c, label:label, g:g};
+    });
+  });
+
+  // ----- Move / swap state -----
+  var moveFrom = null;      // seat id being moved
+  var tableSwapFrom = null; // table id being swapped
+  var banner = document.getElementById("banner");
+  function showBanner(msg){ document.getElementById("bannerText").textContent = msg; banner.classList.add("open"); }
+  function hideBanner(){ banner.classList.remove("open"); moveFrom = null; tableSwapFrom = null; refresh(); }
+  document.getElementById("bannerCancel").addEventListener("click", hideBanner);
+  document.addEventListener("keydown", function(e){ if (e.key==="Escape" && (moveFrom||tableSwapFrom)) hideBanner(); });
+
+  function onSeatClick(id, tableId, seatKey){
+    if (tableSwapFrom) { hideBanner(); return; }
+    if (moveFrom) {
+      if (id !== moveFrom) {
+        var a = names[moveFrom], b = names[id];
+        if (b) names[moveFrom] = b; else delete names[moveFrom];
+        names[id] = a;
+        save();
+      }
+      hideBanner();
+      return;
+    }
+    openSeat(id, tableId, seatKey);
+  }
+
+  function onTableClick(tid){
+    if (moveFrom) { hideBanner(); return; }
+    if (tableSwapFrom) {
+      if (tid !== tableSwapFrom) {
+        var keys = ["T0","T1","T2","B0","B1","B2","L","R"];
+        keys.forEach(function(k){
+          var idA = tableSwapFrom + "-" + k, idB = tid + "-" + k;
+          var a = names[idA], b = names[idB];
+          if (b) names[idA] = b; else delete names[idA];
+          if (a) names[idB] = a; else delete names[idB];
+        });
+        save();
+      }
+      hideBanner();
+      return;
+    }
+    tableSwapFrom = tid;
+    showBanner("Swapping Table " + tid + " — click another table number");
+    refresh();
+  }
+
+  function refresh(){
+    var q = document.getElementById("search").value.trim().toLowerCase();
+    var seated = 0;
+    for (var id in seatNodes){
+      var name = names[id] || "";
+      if (name) seated++;
+      var node = seatNodes[id];
+      node.circle.setAttribute("fill", name ? "#B33A3A" : "#DDEBD8");
+      var hit = (q && name && name.toLowerCase().indexOf(q) !== -1) || id === moveFrom;
+      node.circle.setAttribute("stroke", hit ? "#C8A415" : (name ? "#B33A3A" : "#6E9E63"));
+      node.circle.setAttribute("stroke-width", hit ? 4 : 2);
+      node.label.textContent = name.length > 12 ? name.slice(0,11) + "…" : name;
+      node.g.setAttribute("aria-label", name ? "Seat "+id+": "+name : "Empty seat "+id);
+    }
+    for (var tid in tableLabels){
+      tableLabels[tid].setAttribute("fill", Number(tid) === tableSwapFrom ? "#C8A415" : "#7A4E2D");
+    }
+    document.getElementById("count").textContent = seated + " of 112 seats named";
+  }
+
+  function save(){
+    try {
+      localStorage.setItem(KEY, JSON.stringify(names));
+      flash("Saved ✓");
+    } catch(e){ flash("Save failed"); }
+  }
+  var flashTimer;
+  function flash(msg){
+    var s = document.getElementById("status");
+    s.textContent = msg;
+    clearTimeout(flashTimer);
+    flashTimer = setTimeout(function(){ s.textContent=""; }, 1400);
+  }
+
+  // Dialog
+  var overlay = document.getElementById("overlay"), dlgInput = document.getElementById("dlgInput"),
+      btnClear = document.getElementById("btnClear"), btnMove = document.getElementById("btnMove"), current = null;
+  function openSeat(id, tableId, seatKey){
+    current = id;
+    document.getElementById("dlgTitle").textContent = "Table " + tableId + " · seat " + seatKey;
+    dlgInput.value = names[id] || "";
+    btnClear.style.display = names[id] ? "inline-block" : "none";
+    btnMove.style.display = names[id] ? "inline-block" : "none";
+    overlay.classList.add("open");
+    setTimeout(function(){ dlgInput.focus(); }, 30);
+  }
+  function commit(){
+    if (current == null) return;
+    var v = dlgInput.value.trim();
+    if (v) names[current] = v; else delete names[current];
+    save(); refresh(); close();
+  }
+  function close(){ overlay.classList.remove("open"); current = null; }
+  document.getElementById("btnSave").addEventListener("click", commit);
+  btnMove.addEventListener("click", function(){
+    var who = names[current] || "this guest";
+    moveFrom = current;
+    close();
+    showBanner("Moving " + who + " — click a new seat (occupied seats will swap)");
+    refresh();
+  });
+  btnClear.addEventListener("click", function(){ delete names[current]; save(); refresh(); close(); });
+  overlay.addEventListener("click", function(e){ if (e.target === overlay) commit(); });
+  dlgInput.addEventListener("keydown", function(e){
+    if (e.key === "Enter") commit();
+    if (e.key === "Escape") close();
+  });
+
+  // Toolbar
+  document.getElementById("search").addEventListener("input", refresh);
+  document.getElementById("btnCopy").addEventListener("click", function(){
+    var lines = TABLES.map(function(t){
+      var guests = seatPositions(t).map(function(s){ return names[t.id+"-"+s.key]; }).filter(Boolean);
+      return "Table " + t.id + ": " + (guests.length ? guests.join(", ") : "—");
+    });
+    var text = lines.join("\n");
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function(){ flash("Copied ✓"); }, function(){ flash("Copy failed"); });
+    } else {
+      var ta = document.createElement("textarea");
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); flash("Copied ✓"); } catch(e){ flash("Copy failed"); }
+      document.body.removeChild(ta);
+    }
+  });
+  // ----- Export / Import via dialog (works even where downloads are blocked) -----
+  var dataOverlay = document.getElementById("dataOverlay"), dataText = document.getElementById("dataText");
+  function openData(mode){
+    var isExport = mode === "export";
+    document.getElementById("dataTitle").textContent = isExport ? "Your save data" : "Load save data";
+    document.getElementById("dataHint").textContent = isExport
+      ? "Copy this text and paste it anywhere (a note, a message, or the Import box on another device). You can also try downloading it as a file."
+      : "Paste save data here, or pick an exported .json file below.";
+    dataText.value = isExport ? JSON.stringify(names, null, 2) : "";
+    dataText.readOnly = isExport;
+    document.getElementById("dataCopy").style.display = isExport ? "inline-block" : "none";
+    document.getElementById("dataDownload").style.display = isExport ? "inline-block" : "none";
+    document.getElementById("dataLoad").style.display = isExport ? "none" : "inline-block";
+    dataOverlay.classList.add("open");
+    if (isExport) { dataText.focus(); dataText.select(); }
+  }
+  function closeData(){ dataOverlay.classList.remove("open"); }
+  document.getElementById("dataClose").addEventListener("click", closeData);
+  dataOverlay.addEventListener("click", function(e){ if (e.target === dataOverlay) closeData(); });
+
+  document.getElementById("btnShare").addEventListener("click", function(){
+    var url = location.origin + location.pathname + "#data=" + encodeData(names);
+    document.getElementById("dataTitle").textContent = "Shareable link";
+    document.getElementById("dataHint").textContent =
+      "This link contains the current seating. Anyone who opens it sees this chart and can edit their own copy.";
+    dataText.value = url;
+    dataText.readOnly = true;
+    document.getElementById("dataCopy").style.display = "inline-block";
+    document.getElementById("dataDownload").style.display = "none";
+    document.getElementById("dataLoad").style.display = "none";
+    dataOverlay.classList.add("open");
+    dataText.focus(); dataText.select();
+  });
+
+  document.getElementById("btnExport").addEventListener("click", function(){ openData("export"); });
+  document.getElementById("dataCopy").addEventListener("click", function(){
+    dataText.focus(); dataText.select();
+    var ok = false;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(dataText.value).then(function(){ flash("Copied ✓"); }, function(){ tryExec(); });
+      return;
+    }
+    tryExec();
+    function tryExec(){
+      try { ok = document.execCommand("copy"); } catch(e){}
+      flash(ok ? "Copied ✓" : "Select & copy manually");
+    }
+  });
+  document.getElementById("dataDownload").addEventListener("click", function(){
+    try {
+      var blob = new Blob([dataText.value], {type:"application/json"});
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "wedding-seating.json";
+      a.click();
+      URL.revokeObjectURL(a.href);
+      flash("Download started");
+    } catch(e){ flash("Download blocked — use Copy"); }
+  });
+
+  document.getElementById("btnImport").addEventListener("click", function(){ openData("import"); });
+  document.getElementById("dataLoad").addEventListener("click", function(){
+    var raw = dataText.value.trim();
+    if (!raw) { document.getElementById("fileInput").click(); return; }
+    try {
+      var data = JSON.parse(raw);
+      if (typeof data === "object" && data !== null) { names = data; save(); refresh(); closeData(); flash("Loaded ✓"); }
+      else flash("Invalid data");
+    } catch(err){ flash("Invalid data"); }
+  });
+  document.getElementById("fileInput").addEventListener("change", function(e){
+    var f = e.target.files[0]; if (!f) return;
+    var r = new FileReader();
+    r.onload = function(){
+      try {
+        var data = JSON.parse(r.result);
+        if (typeof data === "object" && data !== null) { names = data; save(); refresh(); closeData(); flash("Imported ✓"); }
+        else flash("Invalid file");
+      } catch(err){ flash("Invalid file"); }
+    };
+    r.readAsText(f);
+    e.target.value = "";
+  });
+
+  refresh();
+  if (fromLink) {
+    flash("Loaded from link");
+    save();
+  }
+})();
+</script>
+</body>
+</html>
