@@ -64,7 +64,7 @@
 <body>
 <header>
   <h1>Seating Chart</h1>
-  <span class="count" id="count">0 of 112 seats named</span>
+  <span class="count" id="count">Loading…</span>
   <span class="count" style="display:flex;align-items:center;gap:12px">
     <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:50%;background:#DDEBD8;border:2px solid #6E9E63;display:inline-block"></span>free</span>
     <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:50%;background:#B33A3A;border:2px solid #B33A3A;display:inline-block"></span>taken</span>
@@ -81,7 +81,7 @@
   </div>
 </header>
 
-<main><svg id="plan" viewBox="80 20 740 1700"></svg></main>
+<main><svg id="plan" viewBox="80 20 740 1740"></svg></main>
 
 <div id="overlay">
   <div id="dialog">
@@ -118,14 +118,22 @@
 (function(){
   var KEY = "wedding-seating-v1";
   var TW = 116, TH = 80, CR = 13;
+  var ROW0 = 380, ROWSTEP = 196.7;
   var TABLES = [];
-  var topY = 300, bottomY = 1500, n = 7, slot = (bottomY - topY)/(n-1);
-  for (var i=0;i<n;i++) TABLES.push({id:i+1,  cx:210, cy: topY+i*slot});
-  for (var j=0;j<n;j++) TABLES.push({id:j+8,  cx:690, cy: topY+j*slot});
-  // columns removed
+  // right column, top to bottom: 1..7
+  for (var i=0;i<7;i++) TABLES.push({id:i+1, cx:690, cy: ROW0 + i*ROWSTEP});
+  // left column, top to bottom: 13,12,11,10,9,8
+  for (var j=0;j<6;j++) TABLES.push({id:13-j, cx:210, cy: ROW0 + (j+1)*ROWSTEP});
+  // bride & groom table, bottom centre, 2 seats
+  TABLES.push({id:"BG", cx:450, cy: ROW0 + 6*ROWSTEP, bg:true});
 
   function seatPositions(t){
     var x=t.cx-TW/2, y=t.cy-TH/2, s=[], k;
+    if (t.bg){
+      s.push({key:"S0", x:t.cx-26, y:y-22, side:"top"});
+      s.push({key:"S1", x:t.cx+26, y:y-22, side:"top"});
+      return s;
+    }
     for(k=0;k<3;k++) s.push({key:"T"+k, x:x+TW*(k+0.5)/3, y:y-22, side:"top"});
     for(k=0;k<3;k++) s.push({key:"B"+k, x:x+TW*(k+0.5)/3, y:y+TH+22, side:"bottom"});
     s.push({key:"L", x:x-22, y:t.cy, side:"left"});
@@ -175,16 +183,14 @@
     "6-T2": "Mohika",
     "6-R": "Angus",
     "6-B2": "Anna",
-    "6-B0": "Eysa",
-    "6-B1": "George",
     "7-L": "Etus",
     "7-T0": "Feri",
     "7-T1": "Gyorgi",
     "7-T2": "Zsuzsa",
-    "14-L": "Eszter",
-    "14-B0": "Bars",
-    "14-T0": "Evi",
-    "14-T1": "Barni"
+    "8-L": "Eszter",
+    "8-B0": "Bars",
+    "8-T0": "Evi",
+    "8-T1": "Barni"
   };
 
   function decodeData(str){
@@ -215,31 +221,37 @@
   }
 
   // Static scenery
-  plan.appendChild(el("rect",{x:100,y:40,width:700,height:1620,fill:"#FBF8F1",stroke:"#3E2A1B","stroke-width":4,rx:6}));
-  plan.appendChild(el("rect",{x:334,y:230,width:232,height:1330,fill:"#E8C98F",stroke:"#C9985A","stroke-width":3,rx:4}));
-  var dfText = el("text",{x:450,y:895,"font-size":24,fill:"#7A4E2D","text-anchor":"middle",
-    transform:"rotate(-90 450 895)","letter-spacing":4},"DANCEFLOOR");
-  plan.appendChild(dfText);
-  // (columns removed per request)
-  plan.appendChild(el("rect",{x:380,y:120,width:140,height:70,fill:"#FBEEC2",stroke:"#C8A415","stroke-width":2.5,rx:4}));
-  plan.appendChild(el("text",{x:450,y:160,"font-size":15,"font-weight":700,fill:"#8A6D0A","text-anchor":"middle"},"DJ BOOTH"));
-  plan.appendChild(el("line",{x1:400,y1:1660,x2:500,y2:1660,stroke:"#FBF8F1","stroke-width":8}));
-  plan.appendChild(el("line",{x1:400,y1:1660,x2:500,y2:1660,stroke:"#3E2A1B","stroke-width":3,"stroke-dasharray":"6,5"}));
-  plan.appendChild(el("text",{x:450,y:1686,"font-size":14,fill:"#3E2A1B","text-anchor":"middle",
-    "font-family":"system-ui,sans-serif"},"Main entrance"));
+  plan.appendChild(el("rect",{x:100,y:40,width:700,height:1660,fill:"#FBF8F1",stroke:"#3E2A1B","stroke-width":4,rx:6}));
+  // dancefloor
+  plan.appendChild(el("rect",{x:330,y:400,width:240,height:1050,fill:"#E8C98F",stroke:"#C9985A","stroke-width":3,rx:4}));
+  plan.appendChild(el("text",{x:450,y:925,"font-size":24,fill:"#7A4E2D","text-anchor":"middle",
+    transform:"rotate(-90 450 925)","letter-spacing":4},"DANCEFLOOR"));
+  // DJ booth, top middle
+  plan.appendChild(el("rect",{x:360,y:160,width:180,height:90,fill:"#FBEEC2",stroke:"#C8A415","stroke-width":2.5,rx:4}));
+  plan.appendChild(el("text",{x:450,y:212,"font-size":17,"font-weight":700,fill:"#8A6D0A","text-anchor":"middle"},"DJ BOOTH"));
+  // two food tables, top left
+  [[80,255],[285,460]].forEach(function(r){
+    plan.appendChild(el("rect",{x:130,y:r[0],width:75,height:r[1]-r[0],fill:"#F1E6F7",stroke:"#8B3FBF","stroke-width":2.5,rx:3}));
+    var mid = (r[0]+r[1])/2;
+    plan.appendChild(el("text",{x:167,y:mid,"font-size":15,"font-weight":700,fill:"#8B3FBF","text-anchor":"middle",
+      transform:"rotate(-90 167 "+mid+")","letter-spacing":2},"FOOD"));
+  });
 
   // Seats
   var seatNodes = {};
   var tableLabels = {};
   TABLES.forEach(function(t){
     var x=t.cx-TW/2, y=t.cy-TH/2;
-    plan.appendChild(el("rect",{x:x,y:y,width:TW,height:TH,fill:"#FFFFFF",stroke:"#7A4E2D","stroke-width":2,rx:3}));
-    var lbl = el("text",{x:t.cx,y:t.cy+5,"font-size":16,"font-weight":700,fill:"#7A4E2D",
-      "text-anchor":"middle",class:"tablelabel"},String(t.id));
-    var hitbox = el("rect",{x:t.cx-20,y:t.cy-16,width:40,height:32,fill:"transparent",class:"tablelabel"});
+    plan.appendChild(el("rect",{x:x,y:y,width:TW,height:TH,
+      fill: t.bg ? "#FDF0F3" : "#FFFFFF", stroke: t.bg ? "#B33A6A" : "#7A4E2D","stroke-width":2,rx:3}));
+    var lbl = el("text",{x:t.cx,y:t.cy+5,"font-size": t.bg ? 12 : 16,"font-weight":700,
+      fill: t.bg ? "#B33A6A" : "#7A4E2D","text-anchor":"middle",class: t.bg ? "" : "tablelabel"},
+      t.bg ? "BRIDE & GROOM" : String(t.id));
+    var hitbox = el("rect",{x:t.cx-20,y:t.cy-16,width:40,height:32,
+      fill:"transparent",class: t.bg ? "" : "tablelabel"});
     plan.appendChild(lbl); plan.appendChild(hitbox);
     tableLabels[t.id] = lbl;
-    hitbox.addEventListener("click", function(){ onTableClick(t.id); });
+    if (!t.bg) hitbox.addEventListener("click", function(){ onTableClick(t.id); });
     seatPositions(t).forEach(function(s){
       var id = t.id + "-" + s.key;
       var g = el("g",{class:"seat",tabindex:0,role:"button"});
@@ -315,9 +327,11 @@
       node.g.setAttribute("aria-label", name ? "Seat "+id+": "+name : "Empty seat "+id);
     }
     for (var tid in tableLabels){
-      tableLabels[tid].setAttribute("fill", Number(tid) === tableSwapFrom ? "#C8A415" : "#7A4E2D");
+      tableLabels[tid].setAttribute("fill",
+        String(tid) === String(tableSwapFrom) ? "#C8A415" : (tid === "BG" ? "#B33A6A" : "#7A4E2D"));
     }
-    document.getElementById("count").textContent = seated + " of 112 seats named";
+    document.getElementById("count").textContent =
+      seated + " of " + Object.keys(seatNodes).length + " seats named";
   }
 
   function save(){
