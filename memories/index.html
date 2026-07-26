@@ -321,9 +321,9 @@
                         <span data-lang="vi">Thử thách ảnh (không bắt buộc — ghi điểm!)</span>
                     </div>
                     <div class="pick-hint">
-                        <span data-lang="en">Tag your photo to score for the challenge leaderboard.</span>
-                        <span data-lang="hu">Címkézd fel a fotódat, hogy pontot szerezz a ranglistán.</span>
-                        <span data-lang="vi">Gắn thẻ ảnh của bạn để ghi điểm trên bảng xếp hạng.</span>
+                        <span data-lang="en">Tag your photo to score — tap again to remove.</span>
+                        <span data-lang="hu">Címkézd fel a fotódat a pontokért — koppints újra az eltávolításhoz.</span>
+                        <span data-lang="vi">Gắn thẻ ảnh để ghi điểm — chạm lần nữa để bỏ chọn.</span>
                     </div>
                     <div class="chips" id="challengeChips"></div>
                 </div>
@@ -750,11 +750,12 @@ function closeLightbox(e, force) {
 function renderChips() {
     const box = document.getElementById('challengeChips');
     if (!box) return;
-    box.innerHTML = CHALLENGES.map(c =>
-        `<button type="button" class="chip ${selectedChallenge === c.id ? 'sel' : ''}" onclick="pickChallenge('${c.id}')">
-            <span>${c.emoji} ${escapeHtml(challengeLabel(c))}</span><span class="pts">+${c.points}</span>
-         </button>`
-    ).join('');
+    box.innerHTML = CHALLENGES.map(c => {
+        const sel = selectedChallenge === c.id;
+        return `<button type="button" class="chip ${sel ? 'sel' : ''}" onclick="pickChallenge('${c.id}')">
+            <span>${c.emoji} ${escapeHtml(challengeLabel(c))}</span><span class="pts">${sel ? '✕' : '+' + c.points}</span>
+         </button>`;
+    }).join('');
 }
 function pickChallenge(id) {
     selectedChallenge = (selectedChallenge === id) ? null : id;   // tap again to deselect
