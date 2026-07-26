@@ -80,6 +80,18 @@ const API_BASE = "https://vk-memories.vkunited26.workers.dev";
 let TOKEN = "";
 let ITEMS = [];
 
+// Host-facing challenge labels (English). Keep IDs in sync with the Worker.
+const CHAL = {
+    couple:  { e: '💑', l: 'With the bride & groom', p: 30 },
+    dancer:  { e: '💃', l: 'The best dancer',         p: 20 },
+    funny:   { e: '😂', l: 'The funniest moment',     p: 20 },
+    toast:   { e: '🥂', l: 'A toast / cheers',        p: 15 },
+    dressed: { e: '👗', l: 'Best-dressed guest',      p: 15 },
+    family:  { e: '👪', l: 'A family group photo',    p: 15 },
+    food:    { e: '🍽️', l: 'The food',               p: 10 },
+    detail:  { e: '💐', l: 'A lovely detail / decor', p: 10 },
+};
+
 function unlock() {
     TOKEN = document.getElementById('pwd').value;
     load(true);
@@ -102,9 +114,13 @@ async function load(fromGate) {
 
 function render() {
     const grid = document.getElementById('grid');
-    document.getElementById('statCount').textContent = ITEMS.length + ' items';
+    const totalLikes = ITEMS.reduce((s, it) => s + (it.likes || 0), 0);
+    document.getElementById('statCount').textContent = ITEMS.length + ' items · ' + totalLikes + ' ❤';
     document.getElementById('empty').style.display = ITEMS.length ? 'none' : 'block';
-    grid.innerHTML = ITEMS.map(it => `
+    grid.innerHTML = ITEMS.map(it => {
+        const c = it.challenge && CHAL[it.challenge];
+        const chalLine = c ? ` · ${c.e} ${esc(c.l)} (+${c.p})` : '';
+        return `
         <div class="item">
             ${it.type === 'video' ? '<span class="vbadge">▶ video</span>' : ''}
             <button class="del" title="Delete" onclick="del('${it.id}')">&times;</button>
@@ -116,10 +132,12 @@ function render() {
             <div class="meta">
                 ${it.name ? `<div class="nm">${esc(it.name)}</div>` : '<div class="nm" style="color:#bbb">Anonymous</div>'}
                 ${it.caption ? `<div class="cap">${esc(it.caption)}</div>` : ''}
+                <div class="cap" style="color:#8a8167">♥ ${it.likes || 0}${chalLine}</div>
                 <div class="ts">${it.ts ? new Date(it.ts).toLocaleString() : ''}</div>
                 <a class="dl" href="${it.url}" download target="_blank">Download ⬇</a>
             </div>
-        </div>`).join('');
+        </div>`;
+    }).join('');
 }
 
 async function del(id) {

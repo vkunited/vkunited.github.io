@@ -178,6 +178,70 @@
         footer { text-align: center; padding: 30px 20px 40px; color: #b6b0a0; font-size: 0.8rem; }
         footer .heart { color: var(--secondary-color); }
 
+        /* ---------- Challenge picker (upload) ---------- */
+        .challenge-picker { margin-top: 22px; }
+        .challenge-picker .pick-label { font-size: 0.78rem; letter-spacing: 1px; text-transform: uppercase; color: #888; margin-bottom: 4px; }
+        .challenge-picker .pick-hint { font-size: 0.78rem; color: #aaa; margin-bottom: 12px; }
+        .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+        .chip {
+            cursor: pointer; border: 1px solid #e2ddd0; background: #fff; border-radius: 22px;
+            padding: 8px 13px; font-family: 'Montserrat', sans-serif; font-size: 0.82rem; color: #555;
+            transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px;
+        }
+        .chip .pts { font-size: 0.68rem; color: #b7a94e; }
+        .chip.sel { background: var(--primary-color); color: #fff; border-color: var(--primary-color); }
+        .chip.sel .pts { color: #e7e2d0; }
+
+        .field .field-hint { font-size: 0.75rem; color: #aaa; margin-top: 6px; }
+
+        /* ---------- Likes + challenge badge on gallery items ---------- */
+        .g-item .like {
+            position: absolute; top: 6px; right: 6px; z-index: 3; display: flex; align-items: center; gap: 4px;
+            background: rgba(0,0,0,0.45); color: #fff; border: none; border-radius: 20px; padding: 4px 9px;
+            font-size: 0.78rem; line-height: 1; cursor: pointer; -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
+        }
+        .g-item .like .heart { font-size: 0.92rem; }
+        .g-item .like.on { background: rgba(212,175,55,0.95); color: #3a3320; }
+        .g-item .chal {
+            position: absolute; top: 6px; left: 6px; z-index: 3; background: rgba(255,255,255,0.92); color: #5c6a56;
+            font-size: 0.66rem; padding: 2px 8px; border-radius: 20px; max-width: 78%; white-space: nowrap;
+            overflow: hidden; text-overflow: ellipsis;
+        }
+
+        /* ---------- Challenges / leaderboard panel ---------- */
+        .progress-card { background: var(--light-bg); border-radius: 8px; box-shadow: 0 3px 10px rgba(0,0,0,0.05); padding: 24px 22px; text-align: center; }
+        .progress-card .big-num { font-family: 'Playfair Display', serif; font-size: 2.6rem; color: var(--secondary-color); line-height: 1.1; }
+        .progress-card .sub { color: #888; font-size: 0.85rem; }
+        .progress-card .mine { display: flex; justify-content: center; gap: 26px; margin-top: 16px; }
+        .progress-card .mine .n { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--primary-color); }
+        .progress-card .mine .l { font-size: 0.68rem; letter-spacing: 1px; text-transform: uppercase; color: #aaa; }
+        .progress-bar { height: 8px; background: #ece8dc; border-radius: 5px; overflow: hidden; margin: 18px 0 6px; }
+        .progress-bar > span { display: block; height: 100%; background: var(--secondary-color); width: 0; transition: width 0.4s; }
+
+        .section-title { font-family: 'Playfair Display', serif; color: var(--primary-color); font-size: 1.3rem; margin: 26px 0 12px; }
+
+        .chal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 10px; }
+        .chal-card { background: var(--light-bg); border: 1px solid #eee; border-radius: 8px; padding: 15px 12px; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; }
+        .chal-card:hover { border-color: var(--secondary-color); transform: translateY(-2px); }
+        .chal-card .emoji { font-size: 1.9rem; }
+        .chal-card .name { font-size: 0.85rem; color: #555; margin-top: 6px; }
+        .chal-card .pts { font-size: 0.72rem; color: var(--secondary-color); margin-top: 5px; letter-spacing: 0.5px; }
+        .chal-card .who { font-size: 0.66rem; color: #bbb; margin-top: 5px; }
+        .chal-card.done { background: #f3f6f1; border-color: var(--primary-color); }
+        .chal-card.done::after { content: '✓'; position: absolute; top: 8px; right: 11px; color: var(--primary-color); font-weight: 600; }
+
+        .lb { background: var(--light-bg); border-radius: 8px; box-shadow: 0 3px 10px rgba(0,0,0,0.05); overflow: hidden; }
+        .lb-row { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #f2efe6; }
+        .lb-row:last-child { border-bottom: none; }
+        .lb-row.me { background: #fbf9f2; }
+        .lb-rank { width: 28px; text-align: center; font-family: 'Playfair Display', serif; font-size: 1.05rem; color: #b7b0a0; }
+        .lb-rank.medal { font-size: 1.3rem; }
+        .lb-name { flex: 1; font-size: 0.92rem; color: var(--text-color); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .lb-name .youtag { font-size: 0.62rem; color: var(--secondary-color); letter-spacing: 1px; margin-left: 6px; }
+        .lb-meta { font-size: 0.72rem; color: #aaa; white-space: nowrap; }
+        .lb-pts { font-family: 'Playfair Display', serif; font-size: 1.15rem; color: var(--primary-color); min-width: 46px; text-align: right; }
+        .lb-empty { text-align: center; color: #aaa; padding: 34px 10px; }
+
         @media (max-width: 480px) {
             header .names { font-size: 1.8rem; }
             .gallery-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
@@ -205,6 +269,9 @@
         </button>
         <button class="tab-btn" id="tab-gallery" onclick="showTab('gallery')">
             <span data-lang="en">Gallery</span><span data-lang="hu">Galéria</span><span data-lang="vi">Thư viện</span>
+        </button>
+        <button class="tab-btn" id="tab-challenges" onclick="showTab('challenges')">
+            <span data-lang="en">Challenges</span><span data-lang="hu">Kihívások</span><span data-lang="vi">Thử thách</span>
         </button>
     </div>
 
@@ -247,6 +314,20 @@
 
                 <div class="selected-grid" id="selectedGrid"></div>
 
+                <div class="challenge-picker">
+                    <div class="pick-label">
+                        <span data-lang="en">Photo challenge (optional — earn points!)</span>
+                        <span data-lang="hu">Fotókihívás (nem kötelező — gyűjts pontokat!)</span>
+                        <span data-lang="vi">Thử thách ảnh (không bắt buộc — ghi điểm!)</span>
+                    </div>
+                    <div class="pick-hint">
+                        <span data-lang="en">Tag your photo to score for the challenge leaderboard.</span>
+                        <span data-lang="hu">Címkézd fel a fotódat, hogy pontot szerezz a ranglistán.</span>
+                        <span data-lang="vi">Gắn thẻ ảnh của bạn để ghi điểm trên bảng xếp hạng.</span>
+                    </div>
+                    <div class="chips" id="challengeChips"></div>
+                </div>
+
                 <div class="field">
                     <label>
                         <span data-lang="en">Your name (optional)</span>
@@ -254,6 +335,11 @@
                         <span data-lang="vi">Tên của bạn (không bắt buộc)</span>
                     </label>
                     <input type="text" id="guestName" maxlength="60" autocomplete="name">
+                    <div class="field-hint">
+                        <span data-lang="en">Add your name to appear on the challenge leaderboard.</span>
+                        <span data-lang="hu">Add meg a neved, hogy felkerülj a kihívások ranglistájára.</span>
+                        <span data-lang="vi">Thêm tên để xuất hiện trên bảng xếp hạng thử thách.</span>
+                    </div>
                 </div>
 
                 <div class="field">
@@ -295,6 +381,49 @@
                 <p data-lang="vi">Chưa có kỷ niệm nào — hãy là người đầu tiên chia sẻ! ✨</p>
             </div>
         </section>
+
+        <!-- ============ CHALLENGES PANEL ============ -->
+        <section class="panel" id="panel-challenges">
+            <div class="progress-card">
+                <div class="big-num" id="myPoints">0</div>
+                <div class="sub">
+                    <span data-lang="en">your points</span>
+                    <span data-lang="hu">a pontod</span>
+                    <span data-lang="vi">điểm của bạn</span>
+                </div>
+                <div class="progress-bar"><span id="myProgressBar"></span></div>
+                <div class="mine">
+                    <div><div class="n" id="myDone">0</div><div class="l">
+                        <span data-lang="en">done</span><span data-lang="hu">kész</span><span data-lang="vi">hoàn thành</span>
+                    </div></div>
+                    <div><div class="n" id="myRank">—</div><div class="l">
+                        <span data-lang="en">your rank</span><span data-lang="hu">helyezés</span><span data-lang="vi">hạng</span>
+                    </div></div>
+                    <div><div class="n" id="myLikes">0</div><div class="l">
+                        <span data-lang="en">likes got</span><span data-lang="hu">kapott ❤</span><span data-lang="vi">lượt thích</span>
+                    </div></div>
+                </div>
+            </div>
+
+            <div class="section-title">
+                <span data-lang="en">Photo challenges</span>
+                <span data-lang="hu">Fotókihívások</span>
+                <span data-lang="vi">Thử thách ảnh</span>
+            </div>
+            <div class="chal-grid" id="challengeGrid"></div>
+
+            <div class="section-title">
+                <span data-lang="en">Leaderboard 🏆</span>
+                <span data-lang="hu">Ranglista 🏆</span>
+                <span data-lang="vi">Bảng xếp hạng 🏆</span>
+            </div>
+            <div class="lb" id="leaderboard"></div>
+            <div class="lb-empty" id="lbEmpty" style="display:none">
+                <span data-lang="en">No scores yet — tag a photo with a challenge to get started! ✨</span>
+                <span data-lang="hu">Még nincs pont — címkézz fel egy fotót egy kihívással! ✨</span>
+                <span data-lang="vi">Chưa có điểm — gắn thẻ một bức ảnh với thử thách để bắt đầu! ✨</span>
+            </div>
+        </section>
     </main>
 
 
@@ -314,6 +443,47 @@
    ============================================================ */
 const API_BASE = "https://vk-memories.vkunited26.workers.dev";
 
+/* ============================================================
+   CHALLENGES  —  keep these IDs + point values in sync with the
+   Worker (instantmemories/src/worker.js). The Worker is the final
+   authority on points; the labels/emoji here are just for display.
+   ============================================================ */
+const CHALLENGES = [
+    { id: 'couple',  points: 30, emoji: '💑', en: 'With the bride & groom', hu: 'A menyasszonnyal és vőlegénnyel', vi: 'Với cô dâu & chú rể' },
+    { id: 'dancer',  points: 20, emoji: '💃', en: 'The best dancer',         hu: 'A legjobb táncos',              vi: 'Vũ công đỉnh nhất' },
+    { id: 'funny',   points: 20, emoji: '😂', en: 'The funniest moment',     hu: 'A legviccesebb pillanat',       vi: 'Khoảnh khắc hài nhất' },
+    { id: 'toast',   points: 15, emoji: '🥂', en: 'A toast / cheers',        hu: 'Egy pohárköszöntő',             vi: 'Nâng ly chúc mừng' },
+    { id: 'dressed', points: 15, emoji: '👗', en: 'Best-dressed guest',      hu: 'A legjobban öltözött vendég',   vi: 'Khách mặc đẹp nhất' },
+    { id: 'family',  points: 15, emoji: '👪', en: 'A family group photo',    hu: 'Családi csoportkép',            vi: 'Ảnh nhóm gia đình' },
+    { id: 'food',    points: 10, emoji: '🍽️', en: 'The food',               hu: 'Az étel',                       vi: 'Món ăn' },
+    { id: 'detail',  points: 10, emoji: '💐', en: 'A lovely detail / decor', hu: 'Egy szép részlet / dekoráció',  vi: 'Chi tiết / trang trí đẹp' },
+];
+const CHALLENGE_MAP = Object.fromEntries(CHALLENGES.map(c => [c.id, c]));
+function challengeLabel(c) { const l = localStorage.getItem('vk_lang') || 'en'; return c[l] || c.en; }
+
+let selectedChallenge = null;  // challenge id chosen for the current upload
+
+/* ---------- Anonymous per-device identity (for likes + leaderboard) ---------- */
+function guestId() {
+    let g = null;
+    try { g = localStorage.getItem('vk_guest'); } catch (e) {}
+    if (!g) {
+        g = (crypto.randomUUID ? crypto.randomUUID() : 'g' + Date.now() + Math.random().toString(36).slice(2));
+        try { localStorage.setItem('vk_guest', g); } catch (e) {}
+    }
+    return g;
+}
+/* Which items THIS device has liked (for the filled-heart state). */
+function likedSet() {
+    try { return new Set(JSON.parse(localStorage.getItem('vk_liked') || '[]')); } catch (e) { return new Set(); }
+}
+function saveLiked(set) { try { localStorage.setItem('vk_liked', JSON.stringify([...set])); } catch (e) {} }
+/* Challenges this device has completed (for the ✓ + progress, without a round-trip). */
+function myChallenges() {
+    try { return new Set(JSON.parse(localStorage.getItem('vk_challenges') || '[]')); } catch (e) { return new Set(); }
+}
+function addMyChallenge(id) { const s = myChallenges(); s.add(id); try { localStorage.setItem('vk_challenges', JSON.stringify([...s])); } catch (e) {} }
+
 /* ---------- i18n (same mechanism as the main site) ---------- */
 function setLang(lang) {
     document.querySelectorAll('[data-lang]').forEach(el => {
@@ -324,15 +494,19 @@ function setLang(lang) {
     if (active) active.style.opacity = '1';
     try { localStorage.setItem('vk_lang', lang); } catch (e) {}
     document.documentElement.lang = lang;
+    // These bits are rendered by JS, so re-render them in the new language.
+    renderChips();
+    if (document.getElementById('panel-challenges').classList.contains('active')) renderChallengePanel();
 }
 
 /* ---------- Tabs ---------- */
 function showTab(name) {
-    document.getElementById('panel-upload').classList.toggle('active', name === 'upload');
-    document.getElementById('panel-gallery').classList.toggle('active', name === 'gallery');
-    document.getElementById('tab-upload').classList.toggle('active', name === 'upload');
-    document.getElementById('tab-gallery').classList.toggle('active', name === 'gallery');
+    ['upload', 'gallery', 'challenges'].forEach(n => {
+        document.getElementById('panel-' + n).classList.toggle('active', name === n);
+        document.getElementById('tab-' + n).classList.toggle('active', name === n);
+    });
     if (name === 'gallery') loadGallery();
+    if (name === 'challenges') loadChallenges();
 }
 
 /* ---------- File selection ---------- */
@@ -380,6 +554,7 @@ async function startUpload() {
     if (!selectedFiles.length) return;
     const name = document.getElementById('guestName').value.trim().slice(0, 60);
     const caption = document.getElementById('caption').value.trim().slice(0, 200);
+    try { if (name) localStorage.setItem('vk_name', name); } catch (e) {}
     const btn = document.getElementById('uploadBtn');
     const wrap = document.getElementById('progressWrap');
     const bar = document.getElementById('bar');
@@ -393,7 +568,7 @@ async function startUpload() {
     for (const file of selectedFiles) {
         txt.textContent = tr(`Uploading ${done + 1} of ${total}…`, `Feltöltés ${done + 1} / ${total}…`, `Đang tải lên ${done + 1} / ${total}…`);
         try {
-            await uploadOne(file, name, caption, (pct) => {
+            await uploadOne(file, name, caption, selectedChallenge, (pct) => {
                 const overall = ((done + pct / 100) / total) * 100;
                 bar.style.width = overall + '%';
             });
@@ -418,11 +593,25 @@ async function startUpload() {
     selectedFiles = [];
     renderSelected();
     document.getElementById('caption').value = '';
-    showToast(tr('Thank you! 💛 Your memories are shared', 'Köszönjük! 💛 Az emlékeid megosztva', 'Cảm ơn bạn! 💛 Kỷ niệm của bạn đã được chia sẻ'));
-    showTab('gallery');
+
+    const scored = selectedChallenge;
+    if (scored) addMyChallenge(scored);
+    selectedChallenge = null;
+    renderChips();
+
+    if (scored) {
+        const c = CHALLENGE_MAP[scored];
+        showToast(tr(`Thank you! 💛 +${c.points} points for "${c.en}"`,
+                     `Köszönjük! 💛 +${c.points} pont: „${c.hu}”`,
+                     `Cảm ơn bạn! 💛 +${c.points} điểm: “${c.vi}”`));
+        showTab('challenges');
+    } else {
+        showToast(tr('Thank you! 💛 Your memories are shared', 'Köszönjük! 💛 Az emlékeid megosztva', 'Cảm ơn bạn! 💛 Kỷ niệm của bạn đã được chia sẻ'));
+        showTab('gallery');
+    }
 }
 
-async function uploadOne(file, name, caption, onProgress) {
+async function uploadOne(file, name, caption, challenge, onProgress) {
     // 1) ask the Worker for a presigned upload URL
     const signRes = await fetch(`${API_BASE}/api/sign`, {
         method: 'POST',
@@ -443,7 +632,9 @@ async function uploadOne(file, name, caption, onProgress) {
             id, key, publicUrl,
             type: file.type.startsWith('video') ? 'video' : 'image',
             contentType: file.type || 'application/octet-stream',
-            name, caption
+            name, caption,
+            challenge: challenge || null,
+            guestId: guestId()
         })
     });
     if (!completeRes.ok) throw new Error('complete failed: ' + completeRes.status);
@@ -487,17 +678,53 @@ function renderGallery(items) {
     empty.style.display = 'none';
     grid.innerHTML = items.map((it, i) => {
         const cap = it.caption ? `<div class="cap">${escapeHtml(it.caption)}</div>` : '';
-        if (it.type === 'video') {
-            return `<div class="g-item" onclick='openLightbox(${i})'>
-                        <video src="${it.url}#t=0.1" muted playsinline preload="metadata"></video>
-                        <div class="play">▶</div>${cap}
-                    </div>`;
-        }
-        return `<div class="g-item" onclick='openLightbox(${i})'>
-                    <img src="${it.url}" loading="lazy">${cap}
-                </div>`;
+        const media = it.type === 'video'
+            ? `<video src="${it.url}#t=0.1" muted playsinline preload="metadata"></video><div class="play">▶</div>`
+            : `<img src="${it.url}" loading="lazy">`;
+        return `<div class="g-item" onclick='openLightbox(${i})'>${media}${overlayFor(it)}${cap}</div>`;
     }).join('');
     window._gallery = items;
+}
+
+/* Like button + challenge badge overlaid on a gallery item. */
+function overlayFor(it) {
+    const liked = likedSet().has(it.id);
+    const like = `<button class="like ${liked ? 'on' : ''}" onclick='toggleLike(event, "${it.id}")' aria-label="Like">
+                    <span class="heart">${liked ? '♥' : '♡'}</span><span class="cnt">${it.likes || 0}</span>
+                  </button>`;
+    const c = it.challenge && CHALLENGE_MAP[it.challenge];
+    const chal = c ? `<div class="chal">${c.emoji} ${escapeHtml(challengeLabel(c))}</div>` : '';
+    return like + chal;
+}
+
+/* Toggle a like for an item (optimistic UI + server sync, one per device). */
+async function toggleLike(ev, id) {
+    ev.stopPropagation();
+    const set = likedSet();
+    const nowLiked = !set.has(id);
+    if (nowLiked) set.add(id); else set.delete(id);
+    saveLiked(set);
+
+    // Optimistic update of this item's local data + button.
+    const it = (window._gallery || []).find(x => x.id === id);
+    if (it) it.likes = Math.max(0, (it.likes || 0) + (nowLiked ? 1 : -1));
+    const btn = ev.currentTarget;
+    btn.classList.toggle('on', nowLiked);
+    btn.querySelector('.heart').textContent = nowLiked ? '♥' : '♡';
+    if (it) btn.querySelector('.cnt').textContent = it.likes;
+
+    try {
+        const res = await fetch(`${API_BASE}/api/like`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, voterId: guestId(), like: nowLiked })
+        });
+        if (res.ok) {
+            const data = await res.json();          // authoritative count
+            if (it) it.likes = data.likes;
+            btn.querySelector('.cnt').textContent = data.likes;
+        }
+    } catch (e) { /* keep optimistic value; next poll reconciles */ }
 }
 
 /* ---------- Lightbox ---------- */
@@ -517,6 +744,99 @@ function closeLightbox(e, force) {
         document.getElementById('lightbox').classList.remove('show');
         document.getElementById('lightboxContent').innerHTML = '';
     }
+}
+
+/* ---------- Challenge picker (upload tab) ---------- */
+function renderChips() {
+    const box = document.getElementById('challengeChips');
+    if (!box) return;
+    box.innerHTML = CHALLENGES.map(c =>
+        `<button type="button" class="chip ${selectedChallenge === c.id ? 'sel' : ''}" onclick="pickChallenge('${c.id}')">
+            <span>${c.emoji} ${escapeHtml(challengeLabel(c))}</span><span class="pts">+${c.points}</span>
+         </button>`
+    ).join('');
+}
+function pickChallenge(id) {
+    selectedChallenge = (selectedChallenge === id) ? null : id;   // tap again to deselect
+    renderChips();
+}
+function startChallenge(id) {
+    selectedChallenge = id;
+    renderChips();
+    showTab('upload');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ---------- Challenges + leaderboard tab ---------- */
+let challengesTimer = null;
+async function loadChallenges() {
+    try {
+        const res = await fetch(`${API_BASE}/api/leaderboard`);
+        if (res.ok) window._lbData = await res.json();
+    } catch (e) { /* keep last data */ }
+    renderChallengePanel();
+    clearTimeout(challengesTimer);
+    if (document.getElementById('panel-challenges').classList.contains('active')) {
+        challengesTimer = setTimeout(loadChallenges, 8000);   // live-refresh while open
+    }
+}
+
+function renderChallengePanel() {
+    const data = window._lbData || { leaderboard: [], challengeStats: {} };
+    const rows = data.leaderboard || [];
+    const stats = data.challengeStats || {};
+    const myGid = guestId();
+    const myRow = rows.find(r => r.gid && r.gid === myGid);
+
+    // "Done" = what the server credits me with, unioned with anything I did on this device.
+    const doneSet = new Set([...(myRow ? myRow.completed : []), ...myChallenges()]);
+    const myPoints = myRow ? myRow.points : [...doneSet].reduce((s, id) => s + (CHALLENGE_MAP[id]?.points || 0), 0);
+    const scored = rows.filter(r => r.points > 0);
+    const myRank = myRow ? (scored.findIndex(r => r.gid === myGid) + 1) : 0;
+    const myLikes = myRow ? myRow.likesReceived : 0;
+
+    document.getElementById('myPoints').textContent = myPoints;
+    document.getElementById('myDone').textContent = doneSet.size + '/' + CHALLENGES.length;
+    document.getElementById('myRank').textContent = myRank > 0 ? '#' + myRank : '—';
+    document.getElementById('myLikes').textContent = myLikes;
+    document.getElementById('myProgressBar').style.width = (doneSet.size / CHALLENGES.length * 100) + '%';
+
+    // Challenge cards
+    document.getElementById('challengeGrid').innerHTML = CHALLENGES.map(c => {
+        const done = doneSet.has(c.id);
+        const n = stats[c.id] || 0;
+        const who = n > 0
+            ? tr(`${n} ${n === 1 ? 'guest' : 'guests'} got this`, `${n} vendég teljesítette`, `${n} khách đã có`)
+            : tr('Be the first!', 'Legyél az első!', 'Hãy là người đầu tiên!');
+        return `<div class="chal-card ${done ? 'done' : ''}" onclick="startChallenge('${c.id}')">
+                    <div class="emoji">${c.emoji}</div>
+                    <div class="name">${escapeHtml(challengeLabel(c))}</div>
+                    <div class="pts">+${c.points} ${tr('pts', 'pont', 'điểm')}</div>
+                    <div class="who">${who}</div>
+                </div>`;
+    }).join('');
+
+    // Leaderboard
+    const lb = document.getElementById('leaderboard');
+    const empty = document.getElementById('lbEmpty');
+    if (!scored.length) { lb.innerHTML = ''; lb.style.display = 'none'; empty.style.display = 'block'; return; }
+    empty.style.display = 'none'; lb.style.display = 'block';
+    const medals = ['🥇', '🥈', '🥉'];
+    lb.innerHTML = scored.map((r, i) => {
+        const isMe = r.gid && r.gid === myGid;
+        const rank = i < 3 ? `<span class="lb-rank medal">${medals[i]}</span>` : `<span class="lb-rank">${i + 1}</span>`;
+        const name = escapeHtml(r.name || tr('Anonymous', 'Névtelen', 'Ẩn danh'));
+        const you = isMe ? `<span class="youtag">${tr('YOU', 'TE', 'BẠN')}</span>` : '';
+        const meta = `${r.completed.length}/${CHALLENGES.length} · ${r.likesReceived} ❤`;
+        return `<div class="lb-row ${isMe ? 'me' : ''}">
+                    ${rank}
+                    <div style="flex:1;min-width:0">
+                        <div class="lb-name">${name}${you}</div>
+                        <div class="lb-meta">${meta}</div>
+                    </div>
+                    <div class="lb-pts">${r.points}</div>
+                </div>`;
+    }).join('');
 }
 
 /* ---------- helpers ---------- */
@@ -557,7 +877,11 @@ function copyLink() {
 }
 
 /* ---------- init ---------- */
-setLang(localStorage.getItem('vk_lang') || 'en');
+(function initMemories() {
+    guestId(); // ensure a stable anonymous id exists for likes + scoring
+    try { const n = localStorage.getItem('vk_name'); if (n) document.getElementById('guestName').value = n; } catch (e) {}
+})();
+setLang(localStorage.getItem('vk_lang') || 'en');   // also renders the challenge chips
 probeConnectivity();
 </script>
 </body>
