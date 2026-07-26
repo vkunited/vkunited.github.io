@@ -174,6 +174,14 @@
         .lightbox .lb-cap { color: #f3efe4; margin-top: 14px; font-family: 'Playfair Display', serif; font-style: italic; }
         .lightbox .lb-name { color: var(--secondary-color); font-size: 0.8rem; letter-spacing: 1px; margin-top: 4px; }
         .lightbox .close { position: absolute; top: 18px; right: 24px; color: #fff; font-size: 2rem; cursor: pointer; line-height: 1; }
+        .lightbox .lb-like {
+            margin: 18px auto 0; display: inline-flex; align-items: center; gap: 9px;
+            background: rgba(255,255,255,0.12); color: #fff; border: 1px solid rgba(255,255,255,0.28);
+            border-radius: 30px; padding: 11px 22px; font-family: 'Montserrat', sans-serif; font-size: 1rem; cursor: pointer;
+        }
+        .lightbox .lb-like .heart { font-size: 1.2rem; line-height: 1; }
+        .lightbox .lb-like .cnt { font-variant-numeric: tabular-nums; }
+        .lightbox .lb-like.on { background: rgba(212,175,55,0.95); color: #3a3320; border-color: transparent; }
 
         footer { text-align: center; padding: 30px 20px 40px; color: #b6b0a0; font-size: 0.8rem; }
         footer .heart { color: var(--secondary-color); }
@@ -689,7 +697,7 @@ function renderGallery(items) {
 /* Like button + challenge badge overlaid on a gallery item. */
 function overlayFor(it) {
     const liked = likedSet().has(it.id);
-    const like = `<button class="like ${liked ? 'on' : ''}" onclick='toggleLike(event, "${it.id}")' aria-label="Like">
+    const like = `<button class="like likebtn ${liked ? 'on' : ''}" data-id="${it.id}" onclick='toggleLike(event, "${it.id}")' aria-label="Like">
                     <span class="heart">${liked ? '♥' : '♡'}</span><span class="cnt">${it.likes || 0}</span>
                   </button>`;
     const c = it.challenge && CHALLENGE_MAP[it.challenge];
@@ -705,13 +713,10 @@ async function toggleLike(ev, id) {
     if (nowLiked) set.add(id); else set.delete(id);
     saveLiked(set);
 
-    // Optimistic update of this item's local data + button.
+    // Optimistic update of this item's local count + every button showing it.
     const it = (window._gallery || []).find(x => x.id === id);
     if (it) it.likes = Math.max(0, (it.likes || 0) + (nowLiked ? 1 : -1));
-    const btn = ev.currentTarget;
-    btn.classList.toggle('on', nowLiked);
-    btn.querySelector('.heart').textContent = nowLiked ? '♥' : '♡';
-    if (it) btn.querySelector('.cnt').textContent = it.likes;
+    updateLikeButtons(id);
 
     try {
         const res = await fetch(`${API_BASE}/api/like`, {
@@ -722,9 +727,20 @@ async function toggleLike(ev, id) {
         if (res.ok) {
             const data = await res.json();          // authoritative count
             if (it) it.likes = data.likes;
-            btn.querySelector('.cnt').textContent = data.likes;
+            updateLikeButtons(id);
         }
     } catch (e) { /* keep optimistic value; next poll reconciles */ }
+}
+
+/* Sync every like button for an item (gallery thumbnail + lightbox) to current state. */
+function updateLikeButtons(id) {
+    const it = (window._gallery || []).find(x => x.id === id);
+    const liked = likedSet().has(id);
+    document.querySelectorAll(`.likebtn[data-id="${id}"]`).forEach(btn => {
+        btn.classList.toggle('on', liked);
+        const h = btn.querySelector('.heart'); if (h) h.textContent = liked ? '♥' : '♡';
+        const c = btn.querySelector('.cnt'); if (c && it) c.textContent = it.likes || 0;
+    });
 }
 
 /* ---------- Lightbox ---------- */
@@ -736,7 +752,13 @@ function openLightbox(i) {
         : `<img src="${it.url}">`;
     const cap = it.caption ? `<div class="lb-cap">“${escapeHtml(it.caption)}”</div>` : '';
     const nm = it.name ? `<div class="lb-name">— ${escapeHtml(it.name)}</div>` : '';
-    c.innerHTML = media + cap + nm;
+    const liked = likedSet().has(it.id);
+    const likeBtn = `<div><button class="lb-like likebtn ${liked ? 'on' : ''}" data-id="${it.id}" onclick='toggleLike(event, "${it.id}")'>
+            <span class="heart">${liked ? '♥' : '♡'}</span>
+            <span>${tr('Like', 'Tetszik', 'Thích')}</span>
+            <span class="cnt">${it.likes || 0}</span>
+        </button></div>`;
+    c.innerHTML = media + cap + nm + likeBtn;
     document.getElementById('lightbox').classList.add('show');
 }
 function closeLightbox(e, force) {
