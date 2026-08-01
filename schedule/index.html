@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vi Vien &amp; Khanh — Schedule</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Montserrat:wght@300;400;500&display=swap');
+
+  :root{
+    --primary-color:#6B7A64;   /* Sage Green */
+    --secondary-color:#D4AF37; /* Soft Gold */
+    --bg-color:#FAF9F6;
+    --text-color:#333333;
+    --light-bg:#FFFFFF;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Montserrat',sans-serif;color:var(--text-color);background:var(--bg-color);line-height:1.6;}
+  h1,h2,h3{font-family:'Playfair Display',serif;font-weight:400;}
+
+  .lang-switch{text-align:center;padding:18px 0 4px;}
+  .lang-switch img{height:22px;margin:0 6px;cursor:pointer;opacity:.7;border-radius:3px;
+    box-shadow:0 1px 3px rgba(0,0,0,.15);transition:opacity .3s,transform .2s;vertical-align:middle;}
+  .lang-switch img:hover{opacity:1;transform:translateY(-1px);}
+
+  header.page-head{text-align:center;padding:26px 20px 10px;}
+  header.page-head h1{font-size:2.8rem;color:var(--primary-color);}
+  header.page-head .date{font-family:'Playfair Display',serif;font-style:italic;font-size:1.2rem;
+    color:var(--secondary-color);margin-top:6px;}
+  header.page-head p.sub{letter-spacing:2px;text-transform:uppercase;font-size:.8rem;color:#777;margin-top:10px;}
+
+  .timeline{max-width:640px;margin:20px auto 60px;padding:0 20px;}
+  .item{display:flex;gap:18px;align-items:baseline;padding:14px 16px;border-radius:10px;
+    transition:background .2s;}
+  .item:nth-child(odd){background:var(--light-bg);box-shadow:0 1px 4px rgba(0,0,0,.04);}
+  .time{flex:0 0 96px;font-family:'Playfair Display',serif;color:var(--secondary-color);
+    font-size:1rem;white-space:nowrap;}
+  .desc{flex:1;font-size:1.02rem;}
+  .desc .tag{display:inline-block;font-size:.72rem;letter-spacing:1px;text-transform:uppercase;
+    color:var(--primary-color);border:1px solid var(--primary-color);border-radius:20px;
+    padding:1px 9px;margin-left:8px;vertical-align:middle;opacity:.85;}
+  .star{color:var(--secondary-color);}
+
+  footer{text-align:center;padding:24px 20px 50px;color:#999;font-size:.8rem;}
+  footer a{color:var(--primary-color);text-decoration:none;}
+  @media(max-width:480px){
+    header.page-head h1{font-size:2.1rem;}
+    .time{flex-basis:78px;font-size:.9rem;}
+    .desc{font-size:.95rem;}
+  }
+</style>
+</head>
+<body>
+
+<div class="lang-switch">
+  <img src="https://flagcdn.com/w40/gb.png" alt="English" onclick="setLang('en')">
+  <img src="https://flagcdn.com/w40/hu.png" alt="Magyar" onclick="setLang('hu')">
+  <img src="https://flagcdn.com/w40/vn.png" alt="Tiếng Việt" onclick="setLang('vi')">
+</div>
+
+<header class="page-head">
+  <h1 data-lang="en">Order of the Day</h1>
+  <h1 data-lang="hu">A nap programja</h1>
+  <h1 data-lang="vi">Chương trình trong ngày</h1>
+  <p class="sub" data-lang="en">Vi Vien &amp; Khanh</p>
+  <p class="sub" data-lang="hu">Vi Vien &amp; Khanh</p>
+  <p class="sub" data-lang="vi">Vi Vien &amp; Khanh</p>
+</header>
+
+<div class="timeline" id="timeline"></div>
+
+<footer>
+  <p data-lang="en">We can't wait to celebrate with you. ♥</p>
+  <p data-lang="hu">Alig várjuk, hogy együtt ünnepeljünk veletek. ♥</p>
+  <p data-lang="vi">Chúng mình rất mong được cùng chung vui với mọi người. ♥</p>
+</footer>
+
+<script>
+// time, {en, hu, vi}, optional tag {en,hu,vi}
+var SCHEDULE = [
+  ["16:00 – 17:00", {en:"Guests arrive &amp; welcome reception", hu:"Vendégek érkezése &amp; fogadás", vi:"Đón khách &amp; tiệc chào mừng"}],
+  ["17:00 – 17:30", {en:"Wedding parade &amp; symbolic ceremony", hu:"Menyasszonyi bevonulás &amp; jelképes szertartás", vi:"Lễ rước dâu &amp; nghi lễ tượng trưng"}],
+  ["17:30 – 18:00", {en:"Congratulations to the couple", hu:"Gratulációk a párnak", vi:"Chúc mừng cô dâu chú rể"}],
+  ["18:00 – 18:05", {en:"Bouquet toss", hu:"Csokordobás", vi:"Tung hoa cưới"}],
+  ["18:05 – 19:00", {en:"Group photo with everyone", hu:"Közös csoportkép", vi:"Chụp ảnh tập thể"}],
+  ["19:00 – 19:15", {en:"Speeches &amp; toasts", hu:"Köszöntők &amp; pohárköszöntő", vi:"Phát biểu &amp; nâng ly chúc mừng"}],
+  ["19:15 – 19:30", {en:"Getting-to-know-you game", hu:"Ismerkedős játék", vi:"Trò chơi làm quen", tag:{en:"Game",hu:"Játék",vi:"Trò chơi"}}],
+  ["19:30 – 21:00", {en:"Dinner is served", hu:"Vacsora", vi:"Bữa tối"}],
+  ["21:00 – 21:30", {en:"Musical chairs", hu:"Székfoglaló játék", vi:"Trò chơi giành ghế", tag:{en:"Game",hu:"Játék",vi:"Trò chơi"}}],
+  ["21:30 – 22:00", {en:"First dance, the Belgijka, then the floor is yours", hu:"Nyitótánc, Belgijka, majd tiéd a táncparkett", vi:"Điệu nhảy đầu tiên, điệu Belgijka, rồi sàn nhảy mở cửa"}],
+  ["22:00 – 22:30", {en:"Cutting &amp; sharing the cake", hu:"Tortaszelés", vi:"Cắt bánh &amp; thưởng thức bánh cưới"}],
+  ["22:30 – 23:00", {en:"Quiz about the newlyweds", hu:"Kvíz az ifjú párról", vi:"Đố vui về cô dâu chú rể", tag:{en:"Game",hu:"Játék",vi:"Trò chơi"}}],
+  ["23:00 – 23:30", {en:"Khanh's surprise performance", hu:"Khanh meglepetés-produkciója", vi:"Tiết mục bất ngờ của Khánh"}],
+  ["23:30 – 00:00", {en:"Open dancefloor", hu:"Szabad tánc", vi:"Sàn nhảy tự do"}],
+  ["00:00 – 00:30", {en:"Midnight snack", hu:"Éjféli falatozás", vi:"Bữa ăn nhẹ lúc nửa đêm"}],
+  ["00:30 – 01:00", {en:"Video game session", hu:"Videojáték-menet", vi:"Chơi trò chơi điện tử", tag:{en:"Game",hu:"Játék",vi:"Trò chơi"}}],
+  ["01:00 – 03:00", {en:"Bridal dance, then dancing until we drop", hu:"Menyasszonytánc, majd tánc hajnalig", vi:"Điệu nhảy cô dâu, rồi nhảy đến khi mệt thì thôi"}]
+];
+
+function render(){
+  var box = document.getElementById("timeline");
+  box.innerHTML = "";
+  SCHEDULE.forEach(function(row){
+    var time = row[0], txt = row[1], tag = row[2] || (row[1].tag ? null : null);
+    var tagObj = row[1].tag;
+    var item = document.createElement("div");
+    item.className = "item";
+    var langs = ["en","hu","vi"];
+    var descHTML = langs.map(function(l){
+      var t = "<span class='star'>&#9733;</span> " + txt[l];
+      if (tagObj) t += " <span class='tag'>" + tagObj[l] + "</span>";
+      return "<span class='desc' data-lang='" + l + "'>" + t + "</span>";
+    }).join("");
+    item.innerHTML = "<div class='time'>" + time + "</div>" + descHTML;
+    box.appendChild(item);
+  });
+}
+
+function setLang(lang){
+  document.querySelectorAll('[data-lang]').forEach(function(el){
+    el.style.display = el.getAttribute('data-lang') === lang ? '' : 'none';
+  });
+  document.querySelectorAll('.lang-switch img').forEach(function(b){ b.style.opacity = '0.7'; });
+  var active = document.querySelector("[onclick=\"setLang('" + lang + "')\"]");
+  if (active) active.style.opacity = '1';
+  try { localStorage.setItem('vk-lang', lang); } catch(e){}
+}
+
+render();
+var saved = 'en';
+try { saved = localStorage.getItem('vk-lang') || 'en'; } catch(e){}
+setLang(saved);
+</script>
+</body>
+</html>
