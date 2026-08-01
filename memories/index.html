@@ -172,6 +172,12 @@
         .lightbox .content { max-width: 92vw; max-height: 82vh; text-align: center; }
         .lightbox img, .lightbox video { max-width: 92vw; max-height: 74vh; border-radius: 4px; }
         .lightbox .lb-cap { color: #f3efe4; margin-top: 14px; font-family: 'Playfair Display', serif; font-style: italic; }
+        .lightbox .lb-chal {
+            display: inline-flex; align-items: center; gap: 7px; margin-top: 14px;
+            background: rgba(255,255,255,0.14); color: #fff; border: 1px solid rgba(255,255,255,0.22);
+            border-radius: 20px; padding: 6px 14px; font-family: 'Montserrat', sans-serif; font-size: 0.85rem;
+        }
+        .lightbox .lb-chal .lb-chal-pts { color: var(--secondary-color); font-size: 0.75rem; }
         .lightbox .lb-name { color: var(--secondary-color); font-size: 0.8rem; letter-spacing: 1px; margin-top: 4px; }
         .lightbox .close { position: absolute; top: 18px; right: 24px; color: #fff; font-size: 2rem; cursor: pointer; line-height: 1; }
         .lightbox .lb-like {
@@ -752,13 +758,15 @@ function openLightbox(i) {
         : `<img src="${it.url}">`;
     const cap = it.caption ? `<div class="lb-cap">“${escapeHtml(it.caption)}”</div>` : '';
     const nm = it.name ? `<div class="lb-name">— ${escapeHtml(it.name)}</div>` : '';
+    const lc = it.challenge && CHALLENGE_MAP[it.challenge];
+    const chal = lc ? `<div class="lb-chal">${lc.emoji} ${escapeHtml(challengeLabel(lc))} <span class="lb-chal-pts">+${lc.points}</span></div>` : '';
     const liked = likedSet().has(it.id);
     const likeBtn = `<div><button class="lb-like likebtn ${liked ? 'on' : ''}" data-id="${it.id}" onclick='toggleLike(event, "${it.id}")'>
             <span class="heart">${liked ? '♥' : '♡'}</span>
             <span>${tr('Like', 'Tetszik', 'Thích')}</span>
             <span class="cnt">${it.likes || 0}</span>
         </button></div>`;
-    c.innerHTML = media + cap + nm + likeBtn;
+    c.innerHTML = media + chal + cap + nm + likeBtn;
     document.getElementById('lightbox').classList.add('show');
 }
 function closeLightbox(e, force) {
