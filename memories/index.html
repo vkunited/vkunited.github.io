@@ -759,14 +759,14 @@ function openLightbox(i) {
     const cap = it.caption ? `<div class="lb-cap">“${escapeHtml(it.caption)}”</div>` : '';
     const nm = it.name ? `<div class="lb-name">— ${escapeHtml(it.name)}</div>` : '';
     const lc = it.challenge && CHALLENGE_MAP[it.challenge];
-    const chal = lc ? `<div class="lb-chal">${lc.emoji} ${escapeHtml(challengeLabel(lc))} <span class="lb-chal-pts">+${lc.points}</span></div>` : '';
+    const chal = lc ? `<div><span class="lb-chal">${lc.emoji} ${escapeHtml(challengeLabel(lc))} <span class="lb-chal-pts">+${lc.points}</span></span></div>` : '';
     const liked = likedSet().has(it.id);
     const likeBtn = `<div><button class="lb-like likebtn ${liked ? 'on' : ''}" data-id="${it.id}" onclick='toggleLike(event, "${it.id}")'>
             <span class="heart">${liked ? '♥' : '♡'}</span>
             <span>${tr('Like', 'Tetszik', 'Thích')}</span>
             <span class="cnt">${it.likes || 0}</span>
         </button></div>`;
-    c.innerHTML = media + chal + cap + nm + likeBtn;
+    c.innerHTML = media + cap + nm + chal + likeBtn;
     document.getElementById('lightbox').classList.add('show');
 }
 function closeLightbox(e, force) {
