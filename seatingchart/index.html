@@ -347,7 +347,8 @@
       g.addEventListener("click", function(){ onSeatClick(id, t.id, s.key); });
       g.addEventListener("keydown", function(ev){ if(ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); onSeatClick(id, t.id, s.key);} });
       plan.appendChild(g);
-      seatNodes[id] = {circle:c, label:label, g:g};
+      seatNodes[id] = {circle:c, label:label, g:g, sx:s.x, labelY:labelY, side:s.side,
+        stagger: (s.key === "T1" || s.key === "B1")};
     });
   });
 
@@ -396,6 +397,57 @@
     refresh();
   }
 
+  // Label fitting: wrap to <=2 lines and shrink font so a name fits between seats.
+  var MAXW = 130;
+  function fitLabel(node, name){
+    var label = node.label;
+    while (label.firstChild) label.removeChild(label.firstChild);
+    if (!name){ return; }
+
+    function widthAt(str, fs){
+      label.setAttribute("font-size", fs);
+      label.textContent = str;
+      var w = label.getComputedTextLength ? label.getComputedTextLength() : str.length * fs * 0.55;
+      label.textContent = "";
+      return w;
+    }
+
+    var FS = 11;
+    if (widthAt(name, FS) <= MAXW){ renderLines(node, [name], FS); return; }
+
+    var parts = name.split(/\s+/);
+    if (parts.length > 1){
+      var best = null;
+      for (var i=1;i<parts.length;i++){
+        var l1 = parts.slice(0,i).join(" "), l2 = parts.slice(i).join(" ");
+        var w = Math.max(widthAt(l1,FS), widthAt(l2,FS));
+        if (best === null || w < best.w) best = {w:w, l1:l1, l2:l2};
+      }
+      if (best && best.w <= MAXW){ renderLines(node, [best.l1, best.l2], FS); return; }
+      var fs2 = FS;
+      while (fs2 > 8 && Math.max(widthAt(best.l1,fs2), widthAt(best.l2,fs2)) > MAXW) fs2 -= 0.5;
+      renderLines(node, [best.l1, best.l2], fs2);
+      return;
+    }
+    var fs = FS;
+    while (fs > 8 && widthAt(name, fs) > MAXW) fs -= 0.5;
+    renderLines(node, [name], fs);
+  }
+
+  function renderLines(node, lines, fs){
+    var label = node.label;
+    while (label.firstChild) label.removeChild(label.firstChild);
+    label.setAttribute("font-size", fs);
+    var lineH = fs + 2;
+    var baseY = node.labelY;
+    // stagger the middle seat of each 3-seat edge outward so neighbours don't collide
+    if (node.stagger) baseY += (node.side === "top" ? -(lineH+3) : (lineH+3));
+    if (lines.length === 2 && node.side === "top") baseY = baseY - lineH;
+    for (var i=0;i<lines.length;i++){
+      label.appendChild(el("tspan",{x:node.sx, y: baseY + i*lineH}, lines[i]));
+    }
+  }
+
   function refresh(){
     var q = document.getElementById("search").value.trim().toLowerCase();
     var seated = 0;
@@ -407,7 +459,7 @@
       var hit = (q && name && name.toLowerCase().indexOf(q) !== -1) || id === moveFrom;
       node.circle.setAttribute("stroke", hit ? "#C8A415" : (name ? "#B33A3A" : "#6E9E63"));
       node.circle.setAttribute("stroke-width", hit ? 4 : 2);
-      node.label.textContent = name.length > 12 ? name.slice(0,11) + "…" : name;
+      fitLabel(node, name);
       node.g.setAttribute("aria-label", name ? "Seat "+id+": "+name : "Empty seat "+id);
     }
     for (var tid in tableLabels){
