@@ -71,6 +71,14 @@
     .schedule-row{grid-template-columns:1fr;gap:0;margin-bottom:14px;}
     .staff{border-top-left-radius:0;border-top-right-radius:0;margin-top:-2px;}
   }
+  .activities{max-width:760px;margin:10px auto 40px;padding:0 20px;}
+  .activities h2{text-align:center;font-size:2rem;color:var(--primary-color);margin-top:20px;}
+  .activities-sub{text-align:center;font-family:'Playfair Display',serif;font-style:italic;
+    color:var(--secondary-color);font-size:1.05rem;margin:4px 0 22px;}
+  .activity{background:var(--light-bg);border-radius:12px;box-shadow:0 1px 5px rgba(0,0,0,.05);
+    padding:18px 20px;margin-bottom:16px;border-left:4px solid var(--secondary-color);}
+  .activity h3{font-size:1.25rem;color:var(--primary-color);margin-bottom:6px;}
+  .activity p{font-size:1rem;color:#444;line-height:1.55;}
 
   footer{text-align:center;padding:24px 20px 50px;color:#999;font-size:.8rem;}
   footer a{color:var(--primary-color);text-decoration:none;}
@@ -100,6 +108,16 @@
 
 <div id="staffStatus"></div>
 <div class="timeline" id="timeline"></div>
+
+<section class="activities">
+  <h2 data-lang="en">Activities throughout</h2>
+  <h2 data-lang="hu">Egész napos programok</h2>
+  <h2 data-lang="vi">Hoạt động suốt buổi tiệc</h2>
+  <p class="activities-sub" data-lang="en">Enjoy these any time during the celebration</p>
+  <p class="activities-sub" data-lang="hu">Bármikor kipróbálhatók az ünnepség során</p>
+  <p class="activities-sub" data-lang="vi">Có thể tham gia bất cứ lúc nào trong buổi tiệc</p>
+  <div id="activities"></div>
+</section>
 
 <footer>
   <p data-lang="en">We can't wait to celebrate with you. ♥</p>
@@ -313,7 +331,38 @@ function scheduleStaffSave(){
 }
 function staffEditing(){ return document.activeElement && document.activeElement.hasAttribute && document.activeElement.hasAttribute("data-staff"); }
 
+// ---- Activities throughout (standing activities, not time-bound) ----
+var ACTIVITIES = [
+  {
+    title:{en:"Live Gallery Competition", hu:"Élő Galéria Verseny", vi:"Cuộc thi Thư viện Ảnh Trực tiếp"},
+    body:{en:"Scan the QR codes dotted around the venue to snap photos and build one shared gallery together. Feeling competitive? We've set up challenges and a leaderboard to climb — part of the Memories VK United project.", hu:"Olvasd be a helyszínen elszórt QR-kódokat, készíts fényképeket, és építsük fel együtt a közös galériát. Versengős kedvedben vagy? Kihívásokat és ranglistát is készítettünk, amin feljebb kapaszkodhatsz — mindez a Memories VK United projekt része.", vi:"Quét các mã QR đặt quanh địa điểm để chụp ảnh và cùng nhau xây dựng một thư viện ảnh chung. Muốn thử thách hơn? Chúng mình đã chuẩn bị các thử thách và bảng xếp hạng để bạn chinh phục — nằm trong dự án Memories VK United."}
+  },
+  {
+    title:{en:"Guest Tree &amp; Guestbook", hu:"Vendégfa &amp; vendégkönyv", vi:"Cây Lưu Niệm &amp; Sổ Lưu Bút"},
+    body:{en:"Take photos with the Instax camera provided and share them in the guestbook. Then leave your mark — a fingerprint — to help turn the tree fully green.", hu:"Készíts fényképeket a kihelyezett Instax kamerával, és tedd be őket a vendégkönyvbe. Végül hagyd ott a nyomodat — egy ujjlenyomatot —, hogy a fa teljesen zöldbe boruljon.", vi:"Chụp ảnh bằng máy Instax được chuẩn bị sẵn và dán vào sổ lưu bút. Sau đó để lại dấu ấn của bạn — một dấu vân tay — để giúp cây phủ đầy màu xanh."}
+  },
+  {
+    title:{en:"Clothespin Game", hu:"Csipeszes játék", vi:"Trò chơi Kẹp Quần Áo"},
+    body:{en:"Everyone starts with a clothespin clipped to their outfit. There's one forbidden word all evening — say it and whoever catches you takes your pin. Whoever has collected the most pins by the end wins.", hu:"Mindenki egy ruhájára csíptetett csipesszel indul. Egész este van egy tiltott szó — ha kimondod, aki elkapja, elveheti a csipeszedet. Az nyer, aki a végére a legtöbb csipeszt gyűjti össze.", vi:"Mỗi người bắt đầu với một chiếc kẹp gắn trên trang phục. Suốt buổi tối có một từ cấm — nếu bạn lỡ nói ra, ai bắt được sẽ lấy kẹp của bạn. Ai thu được nhiều kẹp nhất khi kết thúc sẽ chiến thắng."}
+  }
+];
+
+function renderActivities(){
+  var box = document.getElementById("activities");
+  box.innerHTML = "";
+  var langs = ["en","hu","vi"];
+  ACTIVITIES.forEach(function(a){
+    var titleHTML = langs.map(function(l){ return "<h3 data-lang='"+l+"'>"+a.title[l]+"</h3>"; }).join("");
+    var bodyHTML = langs.map(function(l){ return "<p data-lang='"+l+"'>"+a.body[l]+"</p>"; }).join("");
+    var card = document.createElement("div");
+    card.className = "activity";
+    card.innerHTML = titleHTML + bodyHTML;
+    box.appendChild(card);
+  });
+}
+
 render();
+renderActivities();
 var saved = 'en';
 try { saved = localStorage.getItem('vk-lang') || 'en'; } catch(e){}
 setLang(saved);
