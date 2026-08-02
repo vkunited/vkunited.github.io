@@ -59,6 +59,21 @@
   #dataDialog .actions #dataLoad, #dataDialog .actions #dataDownload, #dataDialog .actions #dataCopy
     { background:#7A4E2D; color:#F5F1E8; border:none; }
   @media print { header { display:none; } }
+  #guestlist-section{max-width:900px;margin:10px auto 70px;padding:0 20px;}
+  #guestlist-section h2{font-family:Georgia,serif;text-align:center;color:#7A4E2D;font-size:1.7rem;margin:24px 0 4px;font-weight:normal;}
+  .gl-sub{text-align:center;color:#8a6f57;font-size:.9rem;margin:0 0 22px;font-family:system-ui,sans-serif;}
+  .gl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;}
+  .gl-card{background:#fff;border:1px solid #E3D6C4;border-radius:10px;padding:14px 16px;
+    box-shadow:0 1px 4px rgba(0,0,0,.04);break-inside:avoid;}
+  .gl-card.bg{border-color:#E3B7C7;background:#FDF6F8;}
+  .gl-card h3{font-family:Georgia,serif;font-size:1.15rem;color:#7A4E2D;margin:0 0 8px;
+    padding-bottom:6px;border-bottom:1px solid #EEE3D3;font-weight:normal;}
+  .gl-card.bg h3{color:#B33A6A;border-color:#F0DCE4;}
+  .gl-card ol{margin:0;padding-left:22px;font-family:system-ui,sans-serif;font-size:.95rem;color:#3E2A1B;}
+  .gl-card li{padding:2px 0;line-height:1.4;}
+  .gl-card li.hit{background:#FBF3D6;border-radius:4px;padding-left:4px;margin-left:-4px;}
+  .gl-empty{color:#B0A18E;font-style:italic;font-family:system-ui,sans-serif;font-size:.92rem;}
+  @media(max-width:520px){ .gl-grid{grid-template-columns:1fr;} }
 </style>
 </head>
 <body>
@@ -82,6 +97,12 @@
 </header>
 
 <main><svg id="plan" viewBox="80 20 740 2160"></svg></main>
+
+<section id="guestlist-section">
+  <h2>Guest list by table</h2>
+  <p class="gl-sub">The full names for each table — updates automatically with the chart above.</p>
+  <div id="guestlist"></div>
+</section>
 
 <div id="overlay">
   <div id="dialog">
@@ -468,6 +489,39 @@
     }
     document.getElementById("count").textContent =
       seated + " of " + Object.keys(seatNodes).length + " seats named";
+    renderList(q);
+  }
+
+  function renderList(q){
+    var box = document.getElementById("guestlist");
+    if (!box) return;
+    var html = '<div class="gl-grid">';
+    TABLES.forEach(function(t){
+      var isBG = !!t.bg;
+      var title = isBG ? "Bride &amp; Groom" : ("Table " + t.id);
+      var guests = seatPositions(t)
+        .map(function(s){ return names[t.id + "-" + s.key]; })
+        .filter(Boolean);
+      html += '<div class="gl-card' + (isBG ? ' bg' : '') + '">';
+      html += '<h3>' + title + '</h3>';
+      if (guests.length){
+        html += '<ol>';
+        guests.forEach(function(n){
+          var hit = q && n.toLowerCase().indexOf(q) !== -1;
+          html += '<li' + (hit ? ' class="hit"' : '') + '>' + escapeHTML(n) + '</li>';
+        });
+        html += '</ol>';
+      } else {
+        html += '<div class="gl-empty">No guests yet</div>';
+      }
+      html += '</div>';
+    });
+    html += '</div>';
+    box.innerHTML = html;
+  }
+
+  function escapeHTML(s){
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
   function save(){
