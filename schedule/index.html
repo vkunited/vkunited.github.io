@@ -29,9 +29,18 @@
     color:var(--secondary-color);margin-top:6px;}
   header.page-head p.sub{letter-spacing:2px;text-transform:uppercase;font-size:.8rem;color:#777;margin-top:10px;}
 
-  .timeline{max-width:640px;margin:20px auto 60px;padding:0 20px;}
-  .item{display:flex;flex-direction:column;padding:0;border-radius:10px;transition:background .2s;}
-  .item:nth-child(odd){background:var(--light-bg);box-shadow:0 1px 4px rgba(0,0,0,.04);}
+  .timeline{max-width:1080px;margin:20px auto 60px;padding:0 20px;}
+  .schedule-row{display:grid;grid-template-columns:1fr 300px;gap:12px;margin-bottom:10px;align-items:stretch;}
+  .item{display:flex;flex-direction:column;padding:0;border-radius:10px;transition:background .2s;
+    background:var(--light-bg);box-shadow:0 1px 4px rgba(0,0,0,.04);}
+  .staff{background:#EAF1FB;border:1px solid #C3D7F0;border-radius:10px;padding:10px 12px;
+    display:flex;flex-direction:column;gap:4px;}
+  .staff-label{font-size:.66rem;letter-spacing:1px;text-transform:uppercase;color:#3E6DA6;opacity:.8;}
+  .staff textarea{width:100%;box-sizing:border-box;border:1px solid #C3D7F0;border-radius:6px;
+    background:#fff;font-family:'Montserrat',sans-serif;font-size:.9rem;color:#234;padding:7px 9px;
+    resize:vertical;min-height:56px;line-height:1.4;}
+  .staff textarea:focus{outline:none;border-color:#3E6DA6;box-shadow:0 0 0 2px rgba(62,109,166,.15);}
+  #staffStatus{font-size:.72rem;color:#3E6DA6;text-align:center;min-height:16px;margin:-6px 0 10px;font-family:system-ui,sans-serif;}
   .row-head{display:flex;gap:18px;align-items:baseline;padding:14px 16px;}
   .item.expandable .row-head{cursor:pointer;}
   .item.expandable .row-head:hover{color:var(--primary-color);}
@@ -57,6 +66,10 @@
   .sub-desc{font-size:.95rem;color:#444;}
   .sub-body{display:inline-block;}
   .sub-note{display:block;font-style:italic;font-size:.82rem;color:#777;margin-top:3px;line-height:1.45;}
+  @media(max-width:760px){
+    .schedule-row{grid-template-columns:1fr;gap:0;margin-bottom:14px;}
+    .staff{border-top-left-radius:0;border-top-right-radius:0;margin-top:-2px;}
+  }
 
   footer{text-align:center;padding:24px 20px 50px;color:#999;font-size:.8rem;}
   footer a{color:var(--primary-color);text-decoration:none;}
@@ -84,6 +97,7 @@
   <p class="sub" data-lang="vi">Vi Vien &amp; Khanh</p>
 </header>
 
+<div id="staffStatus"></div>
 <div class="timeline" id="timeline"></div>
 
 <footer>
@@ -202,7 +216,25 @@ function render(){
         if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); item.classList.toggle('open'); }
       });
     }
-    box.appendChild(item);
+
+    // two-column wrapper: schedule item (left) + editable staff panel (right)
+    var rowWrap = document.createElement("div");
+    rowWrap.className = "schedule-row";
+    var staff = document.createElement("div");
+    staff.className = "staff";
+    var ta = document.createElement("textarea");
+    ta.setAttribute("data-staff", idx);
+    ta.setAttribute("placeholder", "Who's responsible, notes…");
+    ta.value = STAFF[idx] || "";
+    ta.addEventListener("input", function(){
+      STAFF[idx] = ta.value;
+      scheduleStaffSave();
+    });
+    staff.innerHTML = "<span class='staff-label'>" + time + " · staff</span>";
+    staff.appendChild(ta);
+    rowWrap.appendChild(item);
+    rowWrap.appendChild(staff);
+    box.appendChild(rowWrap);
   });
   // re-apply current language to newly built sub-elements
   var cur = 'en';
@@ -224,10 +256,68 @@ function setLang(lang){
   try { localStorage.setItem('vk-lang', lang); } catch(e){}
 }
 
+// ---- staff notes: live shared storage via Supabase ----
+var SB_URL = "https://fnedrqzrzcwdzmmvxwxi.supabase.co";
+var SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZuZWRycXpyemN3ZHptbXZ4d3hpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4NTU1MDcsImV4cCI6MjEwMDQzMTUwN30.Qpan5njYkqbbdzvWxncpk_HNyDkadsXBzu2z8R55RbE";
+var SB_ROW = SB_URL + "/rest/v1/seating?id=eq.staffnotes";
+function sbHeaders(extra){
+  var h = {"apikey":SB_KEY,"Authorization":"Bearer "+SB_KEY,"Content-Type":"application/json"};
+  for (var k in (extra||{})) h[k]=extra[k];
+  return h;
+}
+var STAFF = {};
+var staffSaveTimer=null, staffPending=false;
+
+function staffStatus(msg,cls){
+  var s=document.getElementById("staffStatus");
+  s.textContent=msg; s.style.color = cls==="err" ? "#B33A3A" : "#3E6DA6";
+}
+function pullStaff(initial){
+  fetch(SB_ROW + "&select=data,updated_at", {headers:sbHeaders(), cache:"no-store"})
+    .then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
+    .then(function(rows){
+      var remote = (rows && rows[0] && rows[0].data && typeof rows[0].data==="object") ? rows[0].data : {};
+      if (staffPending) return;
+      if (JSON.stringify(remote)!==JSON.stringify(STAFF)){
+        STAFF = remote;
+        document.querySelectorAll("[data-staff]").forEach(function(ta){
+          var i=ta.getAttribute("data-staff");
+          if (document.activeElement!==ta) ta.value = STAFF[i] || "";
+        });
+        if(!initial) staffStatus("Updated by someone else","");
+      }
+      staffStatus("Staff notes saved ✓","");
+    })
+    .catch(function(){ staffStatus("Staff notes offline — not shared","err"); });
+}
+function pushStaff(){
+  staffPending=true; staffStatus("Saving…");
+  // row may not exist yet — upsert via POST with on_conflict, fallback to PATCH
+  fetch(SB_URL + "/rest/v1/seating?on_conflict=id", {
+    method:"POST",
+    headers:sbHeaders({"Prefer":"resolution=merge-duplicates,return=representation"}),
+    body: JSON.stringify({id:"staffnotes", data:STAFF, updated_at:new Date().toISOString()})
+  })
+    .then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
+    .then(function(){ staffStatus("Staff notes saved ✓",""); })
+    .catch(function(){ staffStatus("Not saved — check connection","err"); })
+    .then(function(){ staffPending=false; });
+}
+function scheduleStaffSave(){
+  clearTimeout(staffSaveTimer);
+  staffStatus("Saving…");
+  staffSaveTimer=setTimeout(pushStaff, 700);
+}
+function staffEditing(){ return document.activeElement && document.activeElement.hasAttribute && document.activeElement.hasAttribute("data-staff"); }
+
 render();
 var saved = 'en';
 try { saved = localStorage.getItem('vk-lang') || 'en'; } catch(e){}
 setLang(saved);
+
+pullStaff(true);
+setInterval(function(){ if(!staffPending && !staffEditing()) pullStaff(false); }, 8000);
+document.addEventListener("visibilitychange", function(){ if(!document.hidden && !staffPending && !staffEditing()) pullStaff(false); });
 </script>
 </body>
 </html>
