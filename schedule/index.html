@@ -55,6 +55,8 @@
   .sub-time{flex:0 0 92px;font-family:'Playfair Display',serif;color:var(--secondary-color);
     font-size:.9rem;white-space:nowrap;opacity:.9;}
   .sub-desc{font-size:.95rem;color:#444;}
+  .sub-body{display:inline-block;}
+  .sub-note{display:block;font-style:italic;font-size:.82rem;color:#777;margin-top:3px;line-height:1.45;}
 
   footer{text-align:center;padding:24px 20px 50px;color:#999;font-size:.8rem;}
   footer a{color:var(--primary-color);text-decoration:none;}
@@ -95,12 +97,13 @@
 var SCHEDULE = [
   ["16:00 – 17:00", {en:"Guests arrive &amp; welcome reception", hu:"Vendégek érkezése &amp; fogadás", vi:"Đón khách &amp; tiệc chào mừng"}],
   ["17:00 – 17:30", {en:"Wedding parade &amp; symbolic ceremony", hu:"Menyasszonyi bevonulás &amp; jelképes szertartás", vi:"Lễ rước dâu &amp; nghi lễ tượng trưng",
-    note:{en:"Parade order: 1. Groom · 2. Groomsmen · 3. Bridesmaids · 4. Flower girl (Miu) · 5. Bride with her father · 6. Ring bearer (Bruno).", hu:"A bevonulás sorrendje: 1. Vőlegény · 2. Vőfélyek · 3. Koszorúslányok · 4. Koszorúslány kislány (Miu) · 5. Menyasszony az édesapjával · 6. Gyűrűhordozó (Bruno).", vi:"Thứ tự lễ rước: 1. Chú rể · 2. Phù rể · 3. Phù dâu · 4. Bé rải hoa (Miu) · 5. Cô dâu cùng bố · 6. Bé bưng nhẫn (Bruno)."},
     details:[
       ["16:50 – 17:00", {en:"Guests take their places", hu:"Vendégek elfoglalják helyüket", vi:"Khách ổn định chỗ ngồi"}],
-      ["17:00 – 17:10", {en:"The parade &amp; entrance", hu:"Bevonulás", vi:"Lễ rước &amp; tiến vào"}],
+      ["17:00 – 17:10", {en:"The parade &amp; entrance", hu:"Bevonulás", vi:"Lễ rước &amp; tiến vào"},
+        {en:"Order: 1. Groom · 2. Groomsmen · 3. Bridesmaids · 4. Flower girl (Miu) · 5. Bride with her father.", hu:"Sorrend: 1. Vőlegény · 2. Vőfélyek · 3. Koszorúslányok · 4. Koszorúslány kislány (Miu) · 5. Menyasszony az édesapjával.", vi:"Thứ tự: 1. Chú rể · 2. Phù rể · 3. Phù dâu · 4. Bé rải hoa (Miu) · 5. Cô dâu cùng bố."}],
       ["17:10 – 17:13", {en:"Welcome", hu:"Köszöntő", vi:"Lời chào mừng"}],
-      ["17:13 – 17:21", {en:"Vows", hu:"Fogadalmak", vi:"Lời thề nguyện"}],
+      ["17:13 – 17:21", {en:"Vows", hu:"Fogadalmak", vi:"Lời thề nguyện"},
+        {en:"The ring bearer (Bruno) brings the rings forward.", hu:"A gyűrűhordozó (Bruno) hozza előre a gyűrűket.", vi:"Bé bưng nhẫn (Bruno) mang nhẫn lên."}],
       ["17:21 – 17:26", {en:"Ring exchange", hu:"Gyűrűhúzás", vi:"Trao nhẫn cưới"}],
       ["17:26 – 17:29", {en:"Pronouncement &amp; the kiss", hu:"Házassá nyilvánítás &amp; csók", vi:"Tuyên bố thành hôn &amp; nụ hôn"}],
       ["17:29 – 17:30", {en:"Recessional", hu:"Kivonulás", vi:"Rời lễ đường"}]
@@ -169,11 +172,18 @@ function render(){
       }
       if (details){
         var sub = details.map(function(d){
-          var dTime = d[0], dTxt = d[1];
+          var dTime = d[0], dTxt = d[1], dNote = d[2];
           var dDesc = langs.map(function(l){
             return "<span class='sub-desc' data-lang='" + l + "'>" + dTxt[l] + "</span>";
           }).join("");
-          return "<div class='sub-item'><span class='sub-time'>" + dTime + "</span>" + dDesc + "</div>";
+          var noteHTML = "";
+          if (dNote){
+            noteHTML = "<div class='sub-note-wrap'>" + langs.map(function(l){
+              return "<span class='sub-note' data-lang='" + l + "'>" + dNote[l] + "</span>";
+            }).join("") + "</div>";
+          }
+          return "<div class='sub-item'><span class='sub-time'>" + dTime + "</span>" +
+                 "<span class='sub-body'>" + dDesc + noteHTML + "</span></div>";
         }).join("");
         parts.push("<div class='sub-list'>" + sub + "</div>");
       }
