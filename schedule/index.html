@@ -30,16 +30,31 @@
   header.page-head p.sub{letter-spacing:2px;text-transform:uppercase;font-size:.8rem;color:#777;margin-top:10px;}
 
   .timeline{max-width:640px;margin:20px auto 60px;padding:0 20px;}
-  .item{display:flex;gap:18px;align-items:baseline;padding:14px 16px;border-radius:10px;
-    transition:background .2s;}
+  .item{display:flex;flex-direction:column;padding:0;border-radius:10px;transition:background .2s;}
   .item:nth-child(odd){background:var(--light-bg);box-shadow:0 1px 4px rgba(0,0,0,.04);}
+  .row-head{display:flex;gap:18px;align-items:baseline;padding:14px 16px;}
+  .item.expandable .row-head{cursor:pointer;}
+  .item.expandable .row-head:hover{color:var(--primary-color);}
   .time{flex:0 0 96px;font-family:'Playfair Display',serif;color:var(--secondary-color);
     font-size:1rem;white-space:nowrap;}
-  .desc{flex:1;font-size:1.02rem;}
+  .desc-wrap{flex:1;}
+  .desc{font-size:1.02rem;}
   .desc .tag{display:inline-block;font-size:.72rem;letter-spacing:1px;text-transform:uppercase;
     color:var(--primary-color);border:1px solid var(--primary-color);border-radius:20px;
     padding:1px 9px;margin-left:8px;vertical-align:middle;opacity:.85;}
   .star{color:var(--secondary-color);}
+  .chev{flex:0 0 auto;color:var(--primary-color);font-size:.9rem;transition:transform .25s;opacity:.7;}
+  .item.open .chev{transform:rotate(180deg);}
+  .row-body{max-height:0;overflow:hidden;transition:max-height .3s ease;padding:0 16px;}
+  .item.open .row-body{max-height:600px;padding-bottom:14px;}
+  .note{font-style:italic;color:#666;font-size:.92rem;margin:2px 0 10px;padding-left:8px;
+    border-left:2px solid var(--secondary-color);}
+  .sub-list{display:flex;flex-direction:column;gap:2px;}
+  .sub-item{display:flex;gap:14px;align-items:baseline;padding:6px 8px;border-radius:6px;}
+  .sub-item:hover{background:rgba(107,122,100,.06);}
+  .sub-time{flex:0 0 92px;font-family:'Playfair Display',serif;color:var(--secondary-color);
+    font-size:.9rem;white-space:nowrap;opacity:.9;}
+  .sub-desc{font-size:.95rem;color:#444;}
 
   footer{text-align:center;padding:24px 20px 50px;color:#999;font-size:.8rem;}
   footer a{color:var(--primary-color);text-decoration:none;}
@@ -83,7 +98,15 @@ var SCHEDULE = [
   ["17:30 – 18:00", {en:"Congratulations to the couple", hu:"Gratulációk a párnak", vi:"Chúc mừng cô dâu chú rể"}],
   ["18:00 – 18:05", {en:"Bouquet toss", hu:"Csokordobás", vi:"Tung hoa cưới"}],
   ["18:05 – 19:00", {en:"Group photo with everyone", hu:"Közös csoportkép", vi:"Chụp ảnh tập thể"}],
-  ["19:00 – 19:15", {en:"Speeches &amp; toasts", hu:"Köszöntők &amp; pohárköszöntő", vi:"Phát biểu &amp; nâng ly chúc mừng"}],
+  ["19:00 – 19:15", {en:"Speeches &amp; toasts", hu:"Köszöntők &amp; pohárköszöntő", vi:"Phát biểu &amp; nâng ly chúc mừng",
+    note:{en:"The bride, groom and parents take the stage.", hu:"A menyasszony, a vőlegény és a szülők a színpadra állnak.", vi:"Cô dâu, chú rể và bố mẹ cùng lên sân khấu."},
+    details:[
+      ["19:00 – 19:01", {en:"Introduction", hu:"Bevezető", vi:"Giới thiệu"}],
+      ["19:01 – 19:05", {en:"Khanh's speech", hu:"Khanh köszöntője", vi:"Lời phát biểu của Khánh"}],
+      ["19:05 – 19:08", {en:"Vi Vien's speech", hu:"Vi Vien köszöntője", vi:"Lời phát biểu của Vi Vien"}],
+      ["19:08 – 19:12", {en:"Ba Binh's speech", hu:"Ba Binh köszöntője", vi:"Lời phát biểu của Bà Bình"}],
+      ["19:12 – 19:15", {en:"Bo Thanh's speech", hu:"Bo Thanh köszöntője", vi:"Lời phát biểu của Bố Thanh"}]
+    ]}],
   ["19:15 – 19:30", {en:"Getting-to-know-you game", hu:"Ismerkedős játék", vi:"Trò chơi làm quen", tag:{en:"Game",hu:"Játék",vi:"Trò chơi"}}],
   ["19:30 – 21:00", {en:"Dinner is served", hu:"Vacsora", vi:"Bữa tối"}],
   ["21:00 – 21:30", {en:"Musical chairs", hu:"Székfoglaló játék", vi:"Trò chơi giành ghế", tag:{en:"Game",hu:"Játék",vi:"Trò chơi"}}],
@@ -100,26 +123,75 @@ var SCHEDULE = [
 function render(){
   var box = document.getElementById("timeline");
   box.innerHTML = "";
-  SCHEDULE.forEach(function(row){
-    var time = row[0], txt = row[1], tag = row[2] || (row[1].tag ? null : null);
+  SCHEDULE.forEach(function(row, idx){
+    var time = row[0], txt = row[1];
     var tagObj = row[1].tag;
-    var item = document.createElement("div");
-    item.className = "item";
+    var note = row[1].note;
+    var details = row[1].details;
     var langs = ["en","hu","vi"];
+    var hasMore = !!(note || details);
+
+    var item = document.createElement("div");
+    item.className = "item" + (hasMore ? " expandable" : "");
+
     var descHTML = langs.map(function(l){
       var t = "<span class='star'>&#9733;</span> " + txt[l];
       if (tagObj) t += " <span class='tag'>" + tagObj[l] + "</span>";
       return "<span class='desc' data-lang='" + l + "'>" + t + "</span>";
     }).join("");
-    item.innerHTML = "<div class='time'>" + time + "</div>" + descHTML;
+
+    var chevron = hasMore ? "<span class='chev' aria-hidden='true'>&#9662;</span>" : "";
+    var head = "<div class='row-head'><div class='time'>" + time + "</div>" +
+               "<div class='desc-wrap'>" + descHTML + "</div>" + chevron + "</div>";
+
+    var body = "";
+    if (hasMore){
+      var parts = [];
+      if (note){
+        parts.push(langs.map(function(l){
+          return "<p class='note' data-lang='" + l + "'>" + note[l] + "</p>";
+        }).join(""));
+      }
+      if (details){
+        var sub = details.map(function(d){
+          var dTime = d[0], dTxt = d[1];
+          var dDesc = langs.map(function(l){
+            return "<span class='sub-desc' data-lang='" + l + "'>" + dTxt[l] + "</span>";
+          }).join("");
+          return "<div class='sub-item'><span class='sub-time'>" + dTime + "</span>" + dDesc + "</div>";
+        }).join("");
+        parts.push("<div class='sub-list'>" + sub + "</div>");
+      }
+      body = "<div class='row-body' id='body-" + idx + "'>" + parts.join("") + "</div>";
+    }
+
+    item.innerHTML = head + body;
+
+    if (hasMore){
+      var headEl = item.querySelector('.row-head');
+      headEl.setAttribute('role','button');
+      headEl.setAttribute('tabindex','0');
+      headEl.addEventListener('click', function(){ item.classList.toggle('open'); });
+      headEl.addEventListener('keydown', function(e){
+        if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); item.classList.toggle('open'); }
+      });
+    }
     box.appendChild(item);
+  });
+  // re-apply current language to newly built sub-elements
+  var cur = 'en';
+  try { cur = localStorage.getItem('vk-lang') || 'en'; } catch(e){}
+  applyLang(cur);
+}
+
+function applyLang(lang){
+  document.querySelectorAll('[data-lang]').forEach(function(el){
+    el.style.display = el.getAttribute('data-lang') === lang ? '' : 'none';
   });
 }
 
 function setLang(lang){
-  document.querySelectorAll('[data-lang]').forEach(function(el){
-    el.style.display = el.getAttribute('data-lang') === lang ? '' : 'none';
-  });
+  applyLang(lang);
   document.querySelectorAll('.lang-switch img').forEach(function(b){ b.style.opacity = '0.7'; });
   var active = document.querySelector("[onclick=\"setLang('" + lang + "')\"]");
   if (active) active.style.opacity = '1';
