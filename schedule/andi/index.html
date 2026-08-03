@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vi Vien &amp; Khanh — Schedule</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Montserrat:wght@300;400;500&display=swap');
+
+  :root{
+    --primary-color:#6B7A64;   /* Sage Green */
+    --secondary-color:#D4AF37; /* Soft Gold */
+    --bg-color:#FAF9F6;
+    --text-color:#333333;
+    --light-bg:#FFFFFF;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Montserrat',sans-serif;color:var(--text-color);background:var(--bg-color);line-height:1.6;}
+  h1,h2,h3{font-family:'Playfair Display',serif;font-weight:400;}
+
+  .lang-switch{text-align:center;padding:18px 0 4px;}
+  .lang-switch img{height:22px;margin:0 6px;cursor:pointer;opacity:.7;border-radius:3px;
+    box-shadow:0 1px 3px rgba(0,0,0,.15);transition:opacity .3s,transform .2s;vertical-align:middle;}
+  .lang-switch img:hover{opacity:1;transform:translateY(-1px);}
+
+  header.page-head{text-align:center;padding:26px 20px 10px;}
+  header.page-head h1{font-size:2.8rem;color:var(--primary-color);}
+  header.page-head .date{font-family:'Playfair Display',serif;font-style:italic;font-size:1.2rem;
+    color:var(--secondary-color);margin-top:6px;}
+  header.page-head p.sub{letter-spacing:2px;text-transform:uppercase;font-size:.8rem;color:#777;margin-top:10px;}
+
+  .timeline{max-width:1080px;margin:20px auto 60px;padding:0 20px;}
+  .schedule-row{display:grid;grid-template-columns:1fr 300px;gap:12px;margin-bottom:10px;align-items:stretch;}
+  .item{display:flex;flex-direction:column;padding:0;border-radius:10px;transition:background .2s;
+    background:var(--light-bg);box-shadow:0 1px 4px rgba(0,0,0,.04);}
+  .staff{background:#EAF1FB;border:1px solid #C3D7F0;border-radius:10px;padding:10px 12px;
+    display:flex;flex-direction:column;gap:4px;}
+  .staff-label{font-size:.66rem;letter-spacing:1px;text-transform:uppercase;color:#3E6DA6;opacity:.8;}
+  .staff textarea{width:100%;box-sizing:border-box;border:1px solid #C3D7F0;border-radius:6px;
+    background:#fff;font-family:'Montserrat',sans-serif;font-size:.9rem;color:#234;padding:7px 9px;
+    resize:vertical;min-height:56px;line-height:1.4;}
+  .staff textarea:focus{outline:none;border-color:#3E6DA6;box-shadow:0 0 0 2px rgba(62,109,166,.15);}
+  #staffStatus{font-size:.72rem;color:#3E6DA6;text-align:center;min-height:16px;margin:-6px 0 10px;font-family:system-ui,sans-serif;}
+  .row-head{display:flex;gap:18px;align-items:baseline;padding:14px 16px;}
+  .item.expandable .row-head{cursor:pointer;}
+  .item.expandable .row-head:hover{color:var(--primary-color);}
+  .time{flex:0 0 96px;font-family:'Playfair Display',serif;color:var(--secondary-color);
+    font-size:1rem;white-space:nowrap;}
+  .desc-wrap{flex:1;}
+  .desc{font-size:1.02rem;}
+  .desc .tag{display:inline-block;font-size:.72rem;letter-spacing:1px;text-transform:uppercase;
+    color:var(--primary-color);border:1px solid var(--primary-color);border-radius:20px;
+    padding:1px 9px;margin-left:8px;vertical-align:middle;opacity:.85;}
+  .desc .tag.dj{color:#B8860B;border-color:#D4AF37;background:#FBF6E4;}
+  .star{color:var(--secondary-color);}
+  .chev{flex:0 0 auto;color:var(--primary-color);font-size:.9rem;transition:transform .25s;opacity:.7;}
+  .item.open .chev{transform:rotate(180deg);}
+  .row-body{max-height:0;overflow:hidden;transition:max-height .3s ease;padding:0 16px;}
+  .item.open .row-body{max-height:600px;padding-bottom:14px;}
+  .note{font-style:italic;color:#666;font-size:.92rem;margin:2px 0 10px;padding-left:8px;
+    border-left:2px solid var(--secondary-color);}
+  .sub-list{display:flex;flex-direction:column;gap:2px;}
+  .sub-item{display:flex;gap:14px;align-items:baseline;padding:6px 8px;border-radius:6px;}
+  .sub-item:hover{background:rgba(107,122,100,.06);}
+  .sub-time{flex:0 0 92px;font-family:'Playfair Display',serif;color:var(--secondary-color);
+    font-size:.9rem;white-space:nowrap;opacity:.9;}
+  .sub-desc{font-size:.95rem;color:#444;}
+  .sub-body{display:inline-block;}
+  .sub-note{display:block;font-style:italic;font-size:.82rem;color:#777;margin-top:3px;line-height:1.45;}
+  @media(max-width:760px){
+    .schedule-row{grid-template-columns:1fr;gap:0;margin-bottom:14px;}
+    .staff{border-top-left-radius:0;border-top-right-radius:0;margin-top:-2px;}
+  }
+  .activities{max-width:760px;margin:10px auto 40px;padding:0 20px;}
+  .activities h2{text-align:center;font-size:2rem;color:var(--primary-color);margin-top:20px;}
+  .activities-sub{text-align:center;font-family:'Playfair Display',serif;font-style:italic;
+    color:var(--secondary-color);font-size:1.05rem;margin:4px 0 22px;}
+  .activity{background:var(--light-bg);border-radius:12px;box-shadow:0 1px 5px rgba(0,0,0,.05);
+    padding:18px 20px;margin-bottom:16px;border-left:4px solid var(--secondary-color);}
+  .activity h3{font-size:1.25rem;color:var(--primary-color);margin-bottom:6px;}
+  .activity p{font-size:1rem;color:#444;line-height:1.55;}
+
+  footer{text-align:center;padding:24px 20px 50px;color:#999;font-size:.8rem;}
+  footer a{color:var(--primary-color);text-decoration:none;}
+  @media(max-width:480px){
+    header.page-head h1{font-size:2.1rem;}
+    .time{flex-basis:78px;font-size:.9rem;}
+    .desc{font-size:.95rem;}
+  }
+</style>
+</head>
+<body>
+
+<div class="lang-switch">
+  <img src="https://flagcdn.com/w40/gb.png" alt="English" onclick="setLang('en')">
+  <img src="https://flagcdn.com/w40/hu.png" alt="Magyar" onclick="setLang('hu')">
+  <img src="https://flagcdn.com/w40/vn.png" alt="Tiếng Việt" onclick="setLang('vi')">
+</div>
+
+<header class="page-head">
+  <h1 data-lang="en">Order of the Day</h1>
+  <h1 data-lang="hu">A nap programja</h1>
+  <h1 data-lang="vi">Chương trình trong ngày</h1>
+  <p class="sub" data-lang="en">Vi Vien &amp; Khanh</p>
+  <p class="sub" data-lang="hu">Vi Vien &amp; Khanh</p>
+  <p class="sub" data-lang="vi">Vi Vien &amp; Khanh</p>
+</header>
+
+<div id="staffStatus"></div>
+<div class="timeline" id="timeline"></div>
+
+<section class="activities">
+  <h2 data-lang="en">Activities throughout</h2>
+  <h2 data-lang="hu">Egész napos programok</h2>
+  <h2 data-lang="vi">Hoạt động suốt buổi tiệc</h2>
+  <p class="activities-sub" data-lang="en">Enjoy these any time during the celebration</p>
+  <p class="activities-sub" data-lang="hu">Bármikor kipróbálhatók az ünnepség során</p>
+  <p class="activities-sub" data-lang="vi">Có thể tham gia bất cứ lúc nào trong buổi tiệc</p>
+  <div id="activities"></div>
+</section>
+
+<footer>
+  <p data-lang="en">We can't wait to celebrate with you. ♥</p>
+  <p data-lang="hu">Alig várjuk, hogy együtt ünnepeljünk veletek. ♥</p>
+  <p data-lang="vi">Chúng mình rất mong được cùng chung vui với mọi người. ♥</p>
+</footer>
+
+<script>
+// time, {en, hu, vi}, optional tag {en,hu,vi}
+var SCHEDULE = [
+  ["16:00 – 17:00", {en:"Guests arrive &amp; welcome reception", hu:"Vendégek érkezése &amp; fogadás", vi:"Đón khách &amp; tiệc chào mừng",
+    note:{en:"Guests are welcomed in the coffee room with drinks and light snacks. At 16:50 we'll invite everyone to take their seats for the ceremony.", hu:"A vendégeket a kávézóban fogadjuk itallal és apró falatokkal. 16:50-kor kérjük mindenkit, hogy foglalják el helyüket a szertartáshoz.", vi:"Khách được đón tiếp tại phòng cà phê với đồ uống và món ăn nhẹ. Đến 16:50, chúng mình sẽ mời mọi người vào chỗ ngồi để chuẩn bị cho buổi lễ."}}],
+  ["17:00 – 17:30", {en:"Wedding parade &amp; symbolic ceremony", hu:"Menyasszonyi bevonulás &amp; jelképes szertartás", vi:"Lễ rước dâu &amp; nghi lễ tượng trưng",
+    details:[
+      ["16:50 – 17:00", {en:"Guests take their places", hu:"Vendégek elfoglalják helyüket", vi:"Khách ổn định chỗ ngồi"}],
+      ["17:00 – 17:10", {en:"The parade &amp; entrance", hu:"Bevonulás", vi:"Lễ rước &amp; tiến vào"},
+        {en:"Order: 1. Groom · 2. Groomsmen · 3. Bridesmaids · 4. Flower girl (Miu) &amp; ring bearer (Bruno) · 5. Bride with her father.", hu:"Sorrend: 1. Vőlegény · 2. Vőfélyek · 3. Koszorúslányok · 4. Koszorúslány kislány (Miu) &amp; gyűrűhordozó (Bruno) · 5. Menyasszony az édesapjával.", vi:"Thứ tự: 1. Chú rể · 2. Phù rể · 3. Phù dâu · 4. Bé rải hoa (Miu) &amp; bé bưng nhẫn (Bruno) · 5. Cô dâu cùng bố."}],
+      ["17:10 – 17:13", {en:"Welcome", hu:"Köszöntő", vi:"Lời chào mừng"}],
+      ["17:13 – 17:21", {en:"Vows", hu:"Fogadalmak", vi:"Lời thề nguyện"}],
+      ["17:21 – 17:26", {en:"Ring exchange", hu:"Gyűrűhúzás", vi:"Trao nhẫn cưới"}],
+      ["17:26 – 17:29", {en:"Pronouncement &amp; the kiss", hu:"Házassá nyilvánítás &amp; csók", vi:"Tuyên bố thành hôn &amp; nụ hôn"}],
+      ["17:29 – 17:30", {en:"Recessional", hu:"Kivonulás", vi:"Rời lễ đường"}]
+    ]}],
+  ["17:30 – 18:55", {en:"Congratulations &amp; photos", hu:"Gratulációk &amp; fényképek", vi:"Chúc mừng &amp; chụp ảnh",
+    note:{en:"We begin with one big group photo of everyone, then move into the congratulations: guests form a queue, and each guest congratulates the couple and takes a photo with them. Mi Lan will stand by the waterside deck with a basket to collect gifts.", hu:"Egy nagy közös csoportképpel kezdünk, majd jönnek a gratulációk: a vendégek sorba állnak, mindenki gratulál a párnak, és közös fényképet készít velük. Mi Lan a vízparti stég mellett áll egy kosárral, és összegyűjti az ajándékokat.", vi:"Chúng ta bắt đầu bằng một tấm ảnh tập thể lớn với tất cả mọi người, sau đó chuyển sang phần chúc mừng: khách xếp thành hàng, mỗi người chúc mừng cô dâu chú rể và cùng chụp một tấm ảnh với họ. Mi Lan sẽ đứng cạnh sàn gỗ bên mặt nước với một chiếc giỏ để nhận quà."}}],
+  ["18:55 – 19:00", {en:"Bouquet toss", hu:"Csokordobás", vi:"Tung hoa cưới",
+    note:{en:"Followed by photos with the bridesmaids, the groomsmen, and then with family.", hu:"Utána fényképek a koszorúslányokkal, a vőfélyekkel, majd a családdal.", vi:"Sau đó là chụp ảnh với các phù dâu, các phù rể, rồi với gia đình."}}],
+  ["19:00 – 19:20", {en:"Speeches &amp; toasts", hu:"Köszöntők &amp; pohárköszöntő", vi:"Phát biểu &amp; nâng ly chúc mừng",
+    note:{en:"The bride, groom and parents take the stage. While the speeches are on, staff should not walk around.", hu:"A menyasszony, a vőlegény és a szülők a színpadra állnak. A köszöntők alatt a személyzet ne mozogjon a teremben.", vi:"Cô dâu, chú rể và bố mẹ cùng lên sân khấu. Trong lúc phát biểu, nhân viên phục vụ không nên đi lại."},
+    details:[
+      ["19:00 – 19:01", {en:"Introduction", hu:"Bevezető", vi:"Giới thiệu"}],
+      ["19:01 – 19:06", {en:"Khanh's speech", hu:"Khanh köszöntője", vi:"Lời phát biểu của Khánh"}],
+      ["19:06 – 19:11", {en:"Vi Vien's speech", hu:"Vi Vien köszöntője", vi:"Lời phát biểu của Vi Vien"}],
+      ["19:11 – 19:15", {en:"Bo Thanh's speech", hu:"Bo Thanh köszöntője", vi:"Lời phát biểu của Bố Thanh"}],
+      ["19:15 – 19:20", {en:"Ba Binh's speech", hu:"Ba Binh köszöntője", vi:"Lời phát biểu của Ba Binh"}]
+    ]}],
+  ["19:20 – 20:45", {en:"Dinner is served", hu:"Vacsora", vi:"Bữa tối", dj:true,
+    note:{en:"At the beginning of dinner, Vi Vien and Khanh will slip out for photos with the sunset.", hu:"A vacsora elején Vi Vien és Khanh kimennek, hogy fényképeket készítsenek a naplementében.", vi:"Vào đầu bữa tối, Vi Vien và Khánh sẽ chụp ảnh với cảnh hoàng hôn."}}],
+  ["20:45 – 21:00", {en:"Getting-to-know-you game", hu:"Ismerkedős játék", vi:"Trò chơi làm quen", tag:{en:"Game",hu:"Játék",vi:"Trò chơi"},
+    note:{en:"A two-sides game: for each question, guests move to the side that matches their answer. Whoever picks the losing side sits back down, until a winner is left.", hu:"Kétoldalas játék: minden kérdésnél a vendégek átállnak arra az oldalra, amelyik a válaszuknak megfelel. Aki a vesztes oldalt választja, visszaül a helyére, amíg egy győztes marad.", vi:"Trò chơi hai phía: với mỗi câu hỏi, khách di chuyển sang phía tương ứng với câu trả lời của mình. Ai chọn phía thua sẽ về chỗ ngồi, cho đến khi còn lại người chiến thắng."}}],
+  ["21:00 – 21:30", {en:"Musical chairs", hu:"Székfoglaló játék", vi:"Trò chơi giành ghế", tag:{en:"Game",hu:"Játék",vi:"Trò chơi"},
+    note:{en:"A round of musical chairs: 30–40 volunteers set up chairs on the dancefloor and circle them as the music plays. Each time the DJ stops the song, everyone grabs a seat and 2–4 players are knocked out — until one winner is left standing.", hu:"Egy kör székfoglaló: 30–40 önkéntes székeket állít fel a táncparketten, és körbejárja őket, amíg szól a zene. Valahányszor a DJ leállítja a dalt, mindenki leül, és 2–4 játékos kiesik — amíg egyetlen győztes marad.", vi:"Một vòng chơi giành ghế: 30–40 người tình nguyện xếp ghế trên sàn nhảy và đi vòng quanh khi nhạc nổi lên. Mỗi lần DJ dừng nhạc, mọi người tranh nhau ngồi và 2–4 người bị loại — cho đến khi còn lại một người chiến thắng."}}],
+  ["21:30 – 22:00", {en:"First dance, the Belgijka, then the floor is yours", hu:"Nyitótánc, Belgijka, majd tiéd a táncparkett", vi:"Điệu nhảy đầu tiên, điệu Belgijka, rồi sàn nhảy mở cửa", dj:true}],
+  ["22:00 – 22:30", {en:"Cutting &amp; sharing the cake", hu:"Tortaszelés", vi:"Cắt bánh &amp; thưởng thức bánh cưới"}],
+  ["22:30 – 23:00", {en:"Quiz about the newlyweds", hu:"Kvíz az ifjú párról", vi:"Đố vui về cô dâu chú rể", tag:{en:"Game",hu:"Játék",vi:"Trò chơi"},
+    note:{en:"Hosted by Adam. Each table plays as a team, writing answers on paper for Adam to collect. The winning table is revealed during the midnight snack, and the prize is Rượu Sim — a traditional liqueur from Phú Quốc Island, Vietnam.", hu:"Házigazda: Adam. Minden asztal egy csapatként játszik, a válaszokat papírra írják, amit Adam összegyűjt. A nyertes asztalt az éjféli falatozásnál hirdetjük ki, a díj pedig Rượu Sim — egy hagyományos likőr a vietnámi Phú Quốc szigetről.", vi:"Do Adam dẫn dắt. Mỗi bàn chơi theo đội, viết câu trả lời ra giấy để Adam thu lại. Bàn thắng cuộc sẽ được công bố trong bữa ăn nhẹ lúc nửa đêm, và phần thưởng là Rượu Sim — một loại rượu truyền thống của đảo Phú Quốc, Việt Nam."}}],
+  ["23:00 – 23:30", {en:"Khanh's surprise performance", hu:"Khanh meglepetés-produkciója", vi:"Tiết mục bất ngờ của Khánh", dj:true}],
+  ["23:30 – 00:00", {en:"Open dancefloor", hu:"Szabad tánc", vi:"Sàn nhảy tự do", dj:true}],
+  ["00:00 – 00:30", {en:"Midnight snack", hu:"Éjféli falatozás", vi:"Bữa ăn nhẹ lúc nửa đêm",
+    note:{en:"A good moment to prepare your well-wishing notes for the couple, to give during the bridal dance.", hu:"Jó alkalom előkészíteni jókívánságaitokat a pár számára, amelyeket a menyasszonytánc alatt adhattok át.", vi:"Thời điểm thích hợp để chuẩn bị những lời chúc gửi tới cô dâu chú rể, để trao trong điệu nhảy cô dâu."}}],
+  ["00:30 – 01:00", {en:"Video game session", hu:"Videojáték-menet", vi:"Chơi trò chơi điện tử", tag:{en:"Game",hu:"Játék",vi:"Trò chơi"},
+    note:{en:"Everybody: 1-2 Switch", hu:"Mindenki: 1-2 Switch", vi:"Tất cả mọi người: 1-2 Switch"}}],
+  ["01:00 – 03:00", {en:"Bridal dance, then dancing until we drop", hu:"Menyasszonytánc, majd tánc hajnalig", vi:"Điệu nhảy cô dâu, rồi nhảy đến khi mệt thì thôi", dj:true}]
+];
+
+function render(){
+  var box = document.getElementById("timeline");
+  box.innerHTML = "";
+  SCHEDULE.forEach(function(row, idx){
+    var time = row[0], txt = row[1];
+    var tagObj = row[1].tag;
+    var note = row[1].note;
+    var details = row[1].details;
+    var langs = ["en","hu","vi"];
+    var hasMore = !!(note || details);
+
+    var item = document.createElement("div");
+    item.className = "item" + (hasMore ? " expandable" : "");
+
+    var descHTML = langs.map(function(l){
+      var t = "<span class='star'>&#9733;</span> " + txt[l];
+      if (tagObj) t += " <span class='tag'>" + tagObj[l] + "</span>";
+      if (row[1].dj) t += " <span class='tag dj'>DJ</span>";
+      return "<span class='desc' data-lang='" + l + "'>" + t + "</span>";
+    }).join("");
+
+    var chevron = hasMore ? "<span class='chev' aria-hidden='true'>&#9662;</span>" : "";
+    var head = "<div class='row-head'><div class='time'>" + time + "</div>" +
+               "<div class='desc-wrap'>" + descHTML + "</div>" + chevron + "</div>";
+
+    var body = "";
+    if (hasMore){
+      var parts = [];
+      if (note){
+        parts.push(langs.map(function(l){
+          return "<p class='note' data-lang='" + l + "'>" + note[l] + "</p>";
+        }).join(""));
+      }
+      if (details){
+        var sub = details.map(function(d){
+          var dTime = d[0], dTxt = d[1], dNote = d[2];
+          var dDesc = langs.map(function(l){
+            return "<span class='sub-desc' data-lang='" + l + "'>" + dTxt[l] + "</span>";
+          }).join("");
+          var noteHTML = "";
+          if (dNote){
+            noteHTML = "<div class='sub-note-wrap'>" + langs.map(function(l){
+              return "<span class='sub-note' data-lang='" + l + "'>" + dNote[l] + "</span>";
+            }).join("") + "</div>";
+          }
+          return "<div class='sub-item'><span class='sub-time'>" + dTime + "</span>" +
+                 "<span class='sub-body'>" + dDesc + noteHTML + "</span></div>";
+        }).join("");
+        parts.push("<div class='sub-list'>" + sub + "</div>");
+      }
+      body = "<div class='row-body' id='body-" + idx + "'>" + parts.join("") + "</div>";
+    }
+
+    item.innerHTML = head + body;
+
+    if (hasMore){
+      var headEl = item.querySelector('.row-head');
+      headEl.setAttribute('role','button');
+      headEl.setAttribute('tabindex','0');
+      headEl.addEventListener('click', function(){ item.classList.toggle('open'); });
+      headEl.addEventListener('keydown', function(e){
+        if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); item.classList.toggle('open'); }
+      });
+    }
+
+    // two-column wrapper: schedule item (left) + editable staff panel (right)
+    var rowWrap = document.createElement("div");
+    rowWrap.className = "schedule-row";
+    var staff = document.createElement("div");
+    staff.className = "staff";
+    var ta = document.createElement("textarea");
+    ta.setAttribute("data-staff", idx);
+    ta.setAttribute("placeholder", "Who's responsible, notes…");
+    ta.value = STAFF[idx] || "";
+    ta.addEventListener("input", function(){
+      STAFF[idx] = ta.value;
+      scheduleStaffSave();
+    });
+    staff.innerHTML = "<span class='staff-label'>" + time + " · staff</span>";
+    staff.appendChild(ta);
+    rowWrap.appendChild(item);
+    rowWrap.appendChild(staff);
+    box.appendChild(rowWrap);
+  });
+  // re-apply current language to newly built sub-elements
+  var cur = 'en';
+  try { cur = localStorage.getItem('vk-lang') || 'en'; } catch(e){}
+  applyLang(cur);
+}
+
+function applyLang(lang){
+  document.querySelectorAll('[data-lang]').forEach(function(el){
+    el.style.display = el.getAttribute('data-lang') === lang ? '' : 'none';
+  });
+}
+
+function setLang(lang){
+  applyLang(lang);
+  document.querySelectorAll('.lang-switch img').forEach(function(b){ b.style.opacity = '0.7'; });
+  var active = document.querySelector("[onclick=\"setLang('" + lang + "')\"]");
+  if (active) active.style.opacity = '1';
+  try { localStorage.setItem('vk-lang', lang); } catch(e){}
+}
+
+// ---- staff notes: live shared storage via Supabase ----
+var SB_URL = "https://fnedrqzrzcwdzmmvxwxi.supabase.co";
+var SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZuZWRycXpyemN3ZHptbXZ4d3hpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4NTU1MDcsImV4cCI6MjEwMDQzMTUwN30.Qpan5njYkqbbdzvWxncpk_HNyDkadsXBzu2z8R55RbE";
+var SB_ROW = SB_URL + "/rest/v1/seating?id=eq.staffnotes";
+function sbHeaders(extra){
+  var h = {"apikey":SB_KEY,"Authorization":"Bearer "+SB_KEY,"Content-Type":"application/json"};
+  for (var k in (extra||{})) h[k]=extra[k];
+  return h;
+}
+var STAFF = {};
+var staffSaveTimer=null, staffPending=false;
+
+function staffStatus(msg,cls){
+  var s=document.getElementById("staffStatus");
+  s.textContent=msg; s.style.color = cls==="err" ? "#B33A3A" : "#3E6DA6";
+}
+function pullStaff(initial){
+  fetch(SB_ROW + "&select=data,updated_at", {headers:sbHeaders(), cache:"no-store"})
+    .then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
+    .then(function(rows){
+      var remote = (rows && rows[0] && rows[0].data && typeof rows[0].data==="object") ? rows[0].data : {};
+      if (staffPending) return;
+      if (JSON.stringify(remote)!==JSON.stringify(STAFF)){
+        STAFF = remote;
+        document.querySelectorAll("[data-staff]").forEach(function(ta){
+          var i=ta.getAttribute("data-staff");
+          if (document.activeElement!==ta) ta.value = STAFF[i] || "";
+        });
+        if(!initial) staffStatus("Updated by someone else","");
+      }
+      staffStatus("Staff notes saved ✓","");
+    })
+    .catch(function(){ staffStatus("Staff notes offline — not shared","err"); });
+}
+function pushStaff(){
+  staffPending=true; staffStatus("Saving…");
+  // row may not exist yet — upsert via POST with on_conflict, fallback to PATCH
+  fetch(SB_URL + "/rest/v1/seating?on_conflict=id", {
+    method:"POST",
+    headers:sbHeaders({"Prefer":"resolution=merge-duplicates,return=representation"}),
+    body: JSON.stringify({id:"staffnotes", data:STAFF, updated_at:new Date().toISOString()})
+  })
+    .then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
+    .then(function(){ staffStatus("Staff notes saved ✓",""); })
+    .catch(function(){ staffStatus("Not saved — check connection","err"); })
+    .then(function(){ staffPending=false; });
+}
+function scheduleStaffSave(){
+  clearTimeout(staffSaveTimer);
+  staffStatus("Saving…");
+  staffSaveTimer=setTimeout(pushStaff, 700);
+}
+function staffEditing(){ return document.activeElement && document.activeElement.hasAttribute && document.activeElement.hasAttribute("data-staff"); }
+
+// ---- Activities throughout (standing activities, not time-bound) ----
+var ACTIVITIES = [
+  {
+    title:{en:"Live Gallery Competition", hu:"Élő Galéria Verseny", vi:"Cuộc thi Thư viện Ảnh Trực tiếp"},
+    body:{en:"Scan the QR codes dotted around the venue to snap photos and build one shared gallery together. Feeling competitive? We've set up challenges and a leaderboard to climb.", hu:"Olvasd be a helyszínen elszórt QR-kódokat, készíts fényképeket, és építsük fel együtt a közös galériát. Versengős kedvedben vagy? Kihívásokat és ranglistát is készítettünk, amin feljebb kapaszkodhatsz.", vi:"Quét các mã QR đặt quanh địa điểm để chụp ảnh và cùng nhau xây dựng một thư viện ảnh chung. Muốn thử thách hơn? Chúng mình đã chuẩn bị các thử thách và bảng xếp hạng để bạn chinh phục."}
+  },
+  {
+    title:{en:"Guest Tree &amp; Guestbook", hu:"Vendégfa &amp; vendégkönyv", vi:"Cây Lưu Niệm &amp; Sổ Lưu Bút"},
+    body:{en:"Take photos with the Instax camera provided and share them in the guestbook. Then leave your mark — a fingerprint — to help turn the tree fully green.", hu:"Készíts fényképeket a kihelyezett Instax kamerával, és tedd be őket a vendégkönyvbe. Végül hagyd ott a nyomodat — egy ujjlenyomatot —, hogy a fa teljesen zöldbe boruljon.", vi:"Chụp ảnh bằng máy Instax được chuẩn bị sẵn và dán vào sổ lưu bút. Sau đó để lại dấu ấn của bạn — một dấu vân tay — để giúp cây phủ đầy màu xanh."}
+  }
+];
+
+function renderActivities(){
+  var box = document.getElementById("activities");
+  box.innerHTML = "";
+  var langs = ["en","hu","vi"];
+  ACTIVITIES.forEach(function(a){
+    var titleHTML = langs.map(function(l){ return "<h3 data-lang='"+l+"'>"+a.title[l]+"</h3>"; }).join("");
+    var bodyHTML = langs.map(function(l){ return "<p data-lang='"+l+"'>"+a.body[l]+"</p>"; }).join("");
+    var card = document.createElement("div");
+    card.className = "activity";
+    card.innerHTML = titleHTML + bodyHTML;
+    box.appendChild(card);
+  });
+}
+
+render();
+renderActivities();
+var saved = 'en';
+try { saved = localStorage.getItem('vk-lang') || 'en'; } catch(e){}
+setLang(saved);
+
+pullStaff(true);
+setInterval(function(){ if(!staffPending && !staffEditing()) pullStaff(false); }, 8000);
+document.addEventListener("visibilitychange", function(){ if(!document.hidden && !staffPending && !staffEditing()) pullStaff(false); });
+</script>
+</body>
+</html>
