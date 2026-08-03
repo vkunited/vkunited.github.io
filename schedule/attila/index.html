@@ -280,7 +280,7 @@ function setLang(lang){
 // ---- staff notes: live shared storage via Supabase ----
 var SB_URL = "https://fnedrqzrzcwdzmmvxwxi.supabase.co";
 var SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZuZWRycXpyemN3ZHptbXZ4d3hpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4NTU1MDcsImV4cCI6MjEwMDQzMTUwN30.Qpan5njYkqbbdzvWxncpk_HNyDkadsXBzu2z8R55RbE";
-var SB_ROW = SB_URL + "/rest/v1/seating?id=eq.staffnotes";
+var SB_ROW = SB_URL + "/rest/v1/seating?id=eq.staffnotes_attila";
 function sbHeaders(extra){
   var h = {"apikey":SB_KEY,"Authorization":"Bearer "+SB_KEY,"Content-Type":"application/json"};
   for (var k in (extra||{})) h[k]=extra[k];
@@ -317,7 +317,7 @@ function pushStaff(){
   fetch(SB_URL + "/rest/v1/seating?on_conflict=id", {
     method:"POST",
     headers:sbHeaders({"Prefer":"resolution=merge-duplicates,return=representation"}),
-    body: JSON.stringify({id:"staffnotes", data:STAFF, updated_at:new Date().toISOString()})
+    body: JSON.stringify({id:"staffnotes_attila", data:STAFF, updated_at:new Date().toISOString()})
   })
     .then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
     .then(function(){ staffStatus("Staff notes saved ✓",""); })
