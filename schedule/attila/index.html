@@ -71,6 +71,15 @@
     .schedule-row{grid-template-columns:1fr;gap:0;margin-bottom:14px;}
     .staff{border-top-left-radius:0;border-top-right-radius:0;margin-top:-2px;}
   }
+  /* run-sheet */
+  .andi-dim{opacity:.45;filter:saturate(.6);}
+  .andi-dim:hover{opacity:.75;}
+  .andi-hit-row .item{border:2px solid var(--secondary-color);box-shadow:0 2px 10px rgba(212,175,55,.25);}
+  .andi-hit-row .staff{background:#FBF6E4;border-color:#E7CE86;}
+  .andi-task{margin:0 16px 14px;padding:8px 12px;background:#FBF6E4;border-left:3px solid var(--secondary-color);
+    border-radius:6px;font-size:.95rem;color:#5a4a1e;line-height:1.45;font-family:system-ui,sans-serif;}
+  .andi-badge{display:inline-block;font-size:.66rem;letter-spacing:1px;font-weight:700;text-transform:uppercase;
+    color:#fff;background:var(--secondary-color);border-radius:20px;padding:2px 8px;margin-right:6px;vertical-align:middle;}
   .activities{max-width:760px;margin:10px auto 40px;padding:0 20px;}
   .activities h2{text-align:center;font-size:2rem;color:var(--primary-color);margin-top:20px;}
   .activities-sub{text-align:center;font-family:'Playfair Display',serif;font-style:italic;
@@ -173,6 +182,13 @@ var SCHEDULE = [
   ["01:00 – 03:00", {en:"Bridal dance, then dancing until we drop", hu:"Menyasszonytánc, majd tánc hajnalig", vi:"Điệu nhảy cô dâu, rồi nhảy đến khi mệt thì thôi", dj:true}]
 ];
 
+// Attila's tasks, keyed by the item's English title
+var ATTILA_TASKS = {
+  "Getting-to-know-you game": "Introduce the game and ask guests to stand up behind the couple, then read out the questions.",
+  "Musical chairs": "Introduce the game.",
+  "Quiz about the newlyweds": "Introduce the game in Hungarian."
+};
+
 function render(){
   var box = document.getElementById("timeline");
   box.innerHTML = "";
@@ -243,10 +259,24 @@ function render(){
     rowWrap.className = "schedule-row";
     var staff = document.createElement("div");
     staff.className = "staff";
+    // --- Attila's run-sheet: highlight his rows, dim the rest ---
+    var enText = txt.en;
+    var attilaTask = ATTILA_TASKS[enText] || null;
+    if (attilaTask){
+      item.classList.add("andi-hit");
+      rowWrap.className = "schedule-row andi-hit-row";
+      var taskEl = document.createElement("div");
+      taskEl.className = "andi-task";
+      taskEl.innerHTML = "<span class='andi-badge'>YOUR TASK</span> " + attilaTask;
+      item.appendChild(taskEl);
+    } else {
+      rowWrap.className = "schedule-row andi-dim";
+    }
+
     var ta = document.createElement("textarea");
     ta.setAttribute("data-staff", idx);
     ta.setAttribute("placeholder", "Who's responsible, notes…");
-    ta.value = STAFF[idx] || "";
+    ta.value = STAFF[idx] || (attilaTask ? "Attila: " + attilaTask : "");
     ta.addEventListener("input", function(){
       STAFF[idx] = ta.value;
       scheduleStaffSave();
