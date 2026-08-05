@@ -276,6 +276,121 @@
     s.style.color = cls === "err" ? "#F3B0B0" : (cls === "ok" ? "#BFE3B4" : "#F5F1E8");
   }
 
+var SEED_FULLNAMES = {
+    "1-L": {nick: "KK Eszter", full: "Kiskovács Eszter"},
+    "1-R": {nick: "anh Quang", full: "Nguyen Viet Quang"},
+    "1-T0": {nick: "Ivett", full: "Mohácsi-Kocsis Ivett"},
+    "1-T1": {nick: "Attila M.", full: "Mohácsi Attila"},
+    "1-B0": {nick: "Bruno", full: "Pilo Bruno"},
+    "1-B1": {nick: "Adri", full: "Németh Adrienn"},
+    "1-B2": {nick: "Bao", full: "Nguyen Alex Bao"},
+    "2-L": {nick: "Hak", full: "Kushoro Hakeem"},
+    "2-R": {nick: "George", full: "Lu George"},
+    "2-T0": {nick: "Fred", full: "Seeley Fred"},
+    "2-T1": {nick: "Michael", full: "Aldridge Michael"},
+    "2-T2": {nick: "Mohika", full: "Gupta Mohika"},
+    "2-B0": {nick: "Angus", full: "Davidson Angus"},
+    "2-B1": {nick: "Anna", full: "Davidson Anna"},
+    "2-B2": {nick: "Eysa", full: "Lee Eysa"},
+    "3-L": {nick: "Bars", full: "Szilágyi Bars"},
+    "3-R": {nick: "Attila B", full: "Bukta Attila"},
+    "3-T0": {nick: "Eszter", full: "Kovács Eszter"},
+    "3-T1": {nick: "Lilla M", full: "Meszleny Lilla"},
+    "3-T2": {nick: "Alex", full: "Ganotis Alexandros"},
+    "3-B0": {nick: "Evi", full: "Birincsik Éva"},
+    "3-B1": {nick: "Barni", full: "Hajdu Barnabás"},
+    "3-B2": {nick: "Tara", full: "Gáspár Tamara"},
+    "4-L": {nick: "Kuba", full: "Kulewicz Jakub"},
+    "4-R": {nick: "Ani", full: "Le Hoang Anh"},
+    "4-T0": {nick: "Andi", full: "Daubek Andrea"},
+    "4-T1": {nick: "Hong Hoa", full: "Tran Hong Hoa"},
+    "4-B0": {nick: "Adam", full: "Osiewała Adam"},
+    "4-B1": {nick: "Michal", full: "Sieradzki Michał"},
+    "4-B2": {nick: "Jarek", full: "Dzikowski Jarosław"},
+    "5-L": {nick: "Vợ Hùng(vẩy)", full: "Phạm Thị Thanh Xuân"},
+    "5-R": {nick: "Edit", full: "Halmos Edit"},
+    "5-T0": {nick: "Lan Anh", full: "Nguyễn Lưu Lan Anh"},
+    "5-T1": {nick: "Li Lan", full: "Hain Li Lan"},
+    "5-T2": {nick: "Lan Hoa", full: "Nguyễn Lưu Lan Hoa"},
+    "5-B0": {nick: "Hùng(vẩy)", full: "Lê Tự Quốc Hùng"},
+    "5-B1": {nick: "Vali", full: "Tóthné Hegyi Valéria"},
+    "5-B2": {nick: "Béla", full: "Tóth Béla"},
+    "6-L": {nick: "Anh Kien", full: "Trần Trọng Kiên"},
+    "6-R": {nick: "Nga", full: "Ngô Thúy Nga"},
+    "6-T0": {nick: "Anna-M", full: "Shtypuk Anna-Mariia"},
+    "6-T1": {nick: "Anh Long", full: "Vũ Nam Long"},
+    "6-T2": {nick: "Ha Anh", full: "Đinh Quế Hà Anh"},
+    "6-B0": {nick: "Kim Anh", full: "Hoàng Kim Anh"},
+    "6-B1": {nick: "Tiến", full: "Đỗ Văn Tiến"},
+    "6-B2": {nick: "Long", full: "Đỗ Thăng Long"},
+    "7-L": {nick: "Hùng", full: "Nguyễn Mạnh Hùng"},
+    "7-R": {nick: "Hà", full: "Nguyễn Thị Thu Hà"},
+    "7-T0": {nick: "Hiệp", full: "Nguyễn Bá Hiệp"},
+    "7-T1": {nick: "Yến", full: "Hoàng Hồng Yến"},
+    "7-T2": {nick: "Bà Phượng", full: "Bùi Kim Phượng"},
+    "7-B0": {nick: "Bình", full: "Nguyễn Quang Bình"},
+    "7-B1": {nick: "Hoa", full: "Nguyễn Thị Phương Hoa"},
+    "7-B2": {nick: "Quang", full: "Lê Hồng Quang"},
+    "8-R": {nick: "Thảo Linh", full: "Lê Thảo Linh"},
+    "8-T1": {nick: "Dì Hải", full: "Lê Thị Hải Châu"},
+    "8-T2": {nick: "Dượng Tuấn", full: "Nguyễn Ngọc Tuấn"},
+    "8-B0": {nick: "Cậu Tiến", full: "Lê Nam Tiến"},
+    "8-B1": {nick: "Mợ Trang", full: "Nguyễn Thùy Trang"},
+    "8-B2": {nick: "Việt Dũng", full: "Lê Việt Dũng"},
+    "9-L": {nick: "Etus", full: "Kiskovács Etelka"},
+    "9-T0": {nick: "Feri", full: "Kiskovács Ferenc"},
+    "9-T1": {nick: "Györgyi", full: "Péliné Fülöp Györgyi"},
+    "9-T2": {nick: "Zsazsa", full: "Péli József"},
+    "9-B0": {nick: "Thanh", full: "Nguyễn Công Thanh"},
+    "9-B1": {nick: "Hoà", full: "Phạm Thị Hòa"},
+    "10-L": {nick: "Bà Thu", full: "Lê Thị Thu"},
+    "10-R": {nick: "Việt Hoàng", full: "Đỗ Việt Hoàng"},
+    "10-T0": {nick: "Phượng", full: "Nguyễn Thị Phượng"},
+    "10-T1": {nick: "Viktor", full: "Nguyễn Viktor"},
+    "10-T2": {nick: "Péter", full: "Nguyen Péter"},
+    "10-B0": {nick: "Cậu Tân", full: "Đỗ Xuân Tân"},
+    "10-B1": {nick: "Trang", full: "Đỗ Minh Trang"},
+    "10-B2": {nick: "Minh Khuê", full: "Đỗ Minh Khuê"},
+    "11-L": {nick: "Hằng", full: "Nguyễn Thị Thanh Hằng"},
+    "11-R": {nick: "Ngọc", full: "Lương Bích Ngọc"},
+    "11-T0": {nick: "Phương", full: "Nguyễn Huy Phương"},
+    "11-T1": {nick: "Tâm", full: "Trần Minh Tâm"},
+    "11-T2": {nick: "Hoa", full: "Nguyễn Thị Việt Hoa"},
+    "11-B0": {nick: "Hương", full: "Tôn Thiên Hương"},
+    "11-B1": {nick: "Chương", full: "Phan Mậu Chương"},
+    "11-B2": {nick: "Hùng", full: "Nguyễn Văn Hùng"},
+    "12-L": {nick: "Petra", full: "Kaminek Petra"},
+    "12-R": {nick: "Ricsi", full: "Székely Richárd"},
+    "12-T0": {nick: "Meg", full: "Navarez Meg"},
+    "12-T1": {nick: "Fanni", full: "Vrabély Fanni"},
+    "12-T2": {nick: "Lilla V", full: "Vrabély Lilla"},
+    "12-B0": {nick: "Toni", full: "Phan Tuan"},
+    "12-B1": {nick: "Laci", full: "Hoang László"},
+    "12-B2": {nick: "Tomi", full: "Varga Tamás"},
+    "13-L": {nick: "Anh Trung", full: "Nguyễn Ngọc Trung"},
+    "13-T0": {nick: "Chi Van (Bong)", full: "Kiều Vân"},
+    "13-B0": {nick: "Anh Duc", full: "Lê Minh Đức"},
+    "13-B1": {nick: "Chi Minh", full: "Đào Nguyệt Minh"}
+  };
+
+  // One-time seed: fill in full names imported from the guest spreadsheet,
+  // but only for seats that (a) still hold the expected nickname and
+  // (b) don't already have a full name someone entered. Never overwrites.
+  var SEED_KEY = "wedding-seating-seed-v1";
+  function applyFullNameSeed(){
+    try { if (localStorage.getItem(SEED_KEY) === "done") return false; } catch(e){}
+    var changed = false;
+    for (var seat in SEED_FULLNAMES){
+      var entry = SEED_FULLNAMES[seat];
+      if (names[seat] === entry.nick && !fullnames[seat]){
+        fullnames[seat] = entry.full;
+        changed = true;
+      }
+    }
+    try { localStorage.setItem(SEED_KEY, "done"); } catch(e){}
+    return changed;
+  }
+
   // Pull the shared chart from the server
   function pull(initial){
     return fetch(SB_ROW + "&select=data,updated_at", {headers: sbHeaders(), cache:"no-store"})
@@ -301,6 +416,8 @@
           refresh();
           if (!initial) flash("Updated by someone else");
         }
+        var seeded = applyFullNameSeed();
+        if (seeded) { refresh(); save(); flash("Full names added ✓"); }
         setStatus("Saved for everyone ✓", "ok");
       })
       .catch(function(e){
