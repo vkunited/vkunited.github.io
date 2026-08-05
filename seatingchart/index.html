@@ -69,9 +69,14 @@
   .gl-card h3{font-family:Georgia,serif;font-size:1.15rem;color:#7A4E2D;margin:0 0 8px;
     padding-bottom:6px;border-bottom:1px solid #EEE3D3;font-weight:normal;}
   .gl-card.bg h3{color:#B33A6A;border-color:#F0DCE4;}
-  .gl-card ol{margin:0;padding-left:22px;font-family:system-ui,sans-serif;font-size:.95rem;color:#3E2A1B;}
-  .gl-card li{padding:2px 0;line-height:1.4;}
-  .gl-card li.hit{background:#FBF3D6;border-radius:4px;padding-left:4px;margin-left:-4px;}
+  .gl-row{display:flex;align-items:center;gap:8px;padding:4px 4px;border-radius:5px;}
+  .gl-row.hit{background:#FBF3D6;}
+  .gl-nick{flex:0 0 88px;font-family:system-ui,sans-serif;font-size:.9rem;font-weight:600;color:#7A4E2D;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .gl-full{flex:1 1 auto;min-width:0;font-family:system-ui,sans-serif;font-size:.9rem;color:#3E2A1B;
+    border:1px solid #E3D6C4;border-radius:5px;padding:4px 7px;background:#FCFAF6;}
+  .gl-full:focus{outline:none;border-color:#C9985A;box-shadow:0 0 0 2px rgba(201,152,90,.18);background:#fff;}
+  .gl-card.bg .gl-nick{color:#B33A6A;}
   .gl-empty{color:#B0A18E;font-style:italic;font-family:system-ui,sans-serif;font-size:.92rem;}
   @media(max-width:520px){ .gl-grid{grid-template-columns:1fr;} }
 </style>
@@ -100,7 +105,7 @@
 
 <section id="guestlist-section">
   <h2>Guest list by table</h2>
-  <p class="gl-sub">The full names for each table — updates automatically with the chart above.</p>
+  <p class="gl-sub">Add each guest's full name here — it stays with them when you move or swap seats on the chart.</p>
   <div id="guestlist"></div>
 </section>
 
@@ -237,17 +242,29 @@
   }
 
   var names = {};
+  var fullnames = {};          // seat id -> full name (follows the nickname)
   var remoteStamp = null;      // updated_at we last saw from the server
   var saveTimer = null;
   var pendingSave = false;
 
+  // Accept both the old flat payload ({"1-L":"Kuba",...}) and the new
+  // structured one ({names:{...}, fullnames:{...}}). Returns {names, fullnames}.
+  function normalize(payload){
+    if (payload && typeof payload === "object" && payload.names && typeof payload.names === "object"){
+      return {names: payload.names, fullnames: (payload.fullnames && typeof payload.fullnames==="object") ? payload.fullnames : {}};
+    }
+    return {names: (payload && typeof payload==="object") ? payload : {}, fullnames: {}};
+  }
+
   var fromLink = null;
   if (location.hash.indexOf("#data=") === 0) fromLink = decodeData(location.hash.slice(6));
   if (fromLink) {
-    names = fromLink;
+    var nf0 = normalize(fromLink); names = nf0.names; fullnames = nf0.fullnames;
   } else {
-    try { names = JSON.parse(localStorage.getItem(KEY) || "null"); } catch(e){ names = null; }
-    if (!names) names = JSON.parse(JSON.stringify(DEFAULT_NAMES));
+    var stored = null;
+    try { stored = JSON.parse(localStorage.getItem(KEY) || "null"); } catch(e){ stored = null; }
+    if (!stored) stored = JSON.parse(JSON.stringify(DEFAULT_NAMES));
+    var nf1 = normalize(stored); names = nf1.names; fullnames = nf1.fullnames;
   }
 
   function editing(){ return document.getElementById("overlay").classList.contains("open")
@@ -269,16 +286,18 @@
       .then(function(rows){
         if (!rows || !rows.length) throw new Error("no row");
         var row = rows[0];
-        var remote = row.data && typeof row.data === "object" ? row.data : {};
+        var remoteNF = normalize(row.data && typeof row.data === "object" ? row.data : {});
         // first-ever run: seed the server with the built-in chart
-        if (initial && Object.keys(remote).length === 0 && Object.keys(names).length > 0) {
+        if (initial && Object.keys(remoteNF.names).length === 0 && Object.keys(names).length > 0) {
           return pushRemote(true);
         }
         remoteStamp = row.updated_at;
         if (pendingSave) return;                       // don't stomp edits being saved
-        if (JSON.stringify(remote) !== JSON.stringify(names)) {
-          names = remote;
-          try { localStorage.setItem(KEY, JSON.stringify(names)); } catch(e){}
+        var localPayload = {names: names, fullnames: fullnames};
+        var remotePayload = {names: remoteNF.names, fullnames: remoteNF.fullnames};
+        if (JSON.stringify(remotePayload) !== JSON.stringify(localPayload)) {
+          names = remoteNF.names; fullnames = remoteNF.fullnames;
+          try { localStorage.setItem(KEY, JSON.stringify(remotePayload)); } catch(e){}
           refresh();
           if (!initial) flash("Updated by someone else");
         }
@@ -296,7 +315,7 @@
     return fetch(SB_ROW, {
       method: "PATCH",
       headers: sbHeaders({"Prefer":"return=representation"}),
-      body: JSON.stringify({data: names, updated_at: new Date().toISOString()})
+      body: JSON.stringify({data: {names: names, fullnames: fullnames}, updated_at: new Date().toISOString()})
     })
       .then(function(r){
         if (!r.ok) throw new Error("HTTP " + r.status);
@@ -389,6 +408,10 @@
         var a = names[moveFrom], b = names[id];
         if (b) names[moveFrom] = b; else delete names[moveFrom];
         names[id] = a;
+        // full names travel with their person
+        var fa = fullnames[moveFrom], fb = fullnames[id];
+        if (fb) fullnames[moveFrom] = fb; else delete fullnames[moveFrom];
+        if (fa) fullnames[id] = fa; else delete fullnames[id];
         save();
       }
       hideBanner();
@@ -407,6 +430,10 @@
           var a = names[idA], b = names[idB];
           if (b) names[idA] = b; else delete names[idA];
           if (a) names[idB] = a; else delete names[idB];
+          // full names travel with their person
+          var fa = fullnames[idA], fb = fullnames[idB];
+          if (fb) fullnames[idA] = fb; else delete fullnames[idA];
+          if (fa) fullnames[idB] = fa; else delete fullnames[idB];
         });
         save();
       }
@@ -489,35 +516,80 @@
     }
     document.getElementById("count").textContent =
       seated + " of " + Object.keys(seatNodes).length + " seats named";
-    renderList(q);
+    // don't rebuild the list while a full-name field is focused (would lose caret / input)
+    var ae = document.activeElement;
+    if (!(ae && ae.classList && ae.classList.contains("gl-full"))) {
+      renderList(q);
+    } else {
+      updateListHighlights(q);
+    }
+  }
+
+  function updateListHighlights(q){
+    document.querySelectorAll(".gl-row").forEach(function(row){
+      var input = row.querySelector(".gl-full");
+      var nick = row.querySelector(".gl-nick");
+      var id = input ? input.getAttribute("data-full") : null;
+      var nickTxt = nick ? nick.textContent.toLowerCase() : "";
+      var fullTxt = (id && fullnames[id]) ? fullnames[id].toLowerCase() : "";
+      var hit = q && (nickTxt.indexOf(q) !== -1 || fullTxt.indexOf(q) !== -1);
+      row.classList.toggle("hit", !!hit);
+    });
   }
 
   function renderList(q){
     var box = document.getElementById("guestlist");
     if (!box) return;
-    var html = '<div class="gl-grid">';
+    var frag = document.createDocumentFragment();
+    var grid = document.createElement("div");
+    grid.className = "gl-grid";
     TABLES.forEach(function(t){
       var isBG = !!t.bg;
-      var title = isBG ? "Bride &amp; Groom" : ("Table " + t.id);
-      var guests = seatPositions(t)
-        .map(function(s){ return names[t.id + "-" + s.key]; })
-        .filter(Boolean);
-      html += '<div class="gl-card' + (isBG ? ' bg' : '') + '">';
-      html += '<h3>' + title + '</h3>';
-      if (guests.length){
-        html += '<ol>';
-        guests.forEach(function(n){
-          var hit = q && n.toLowerCase().indexOf(q) !== -1;
-          html += '<li' + (hit ? ' class="hit"' : '') + '>' + escapeHTML(n) + '</li>';
+      var title = isBG ? "Bride & Groom" : ("Table " + t.id);
+      var seatIds = seatPositions(t)
+        .map(function(s){ return t.id + "-" + s.key; })
+        .filter(function(id){ return names[id]; });
+      var card = document.createElement("div");
+      card.className = "gl-card" + (isBG ? " bg" : "");
+      var h3 = document.createElement("h3");
+      h3.textContent = title;
+      card.appendChild(h3);
+      if (seatIds.length){
+        seatIds.forEach(function(id){
+          var nick = names[id];
+          var hit = q && ((nick && nick.toLowerCase().indexOf(q) !== -1) ||
+                          (fullnames[id] && fullnames[id].toLowerCase().indexOf(q) !== -1));
+          var row = document.createElement("div");
+          row.className = "gl-row" + (hit ? " hit" : "");
+          var nickEl = document.createElement("span");
+          nickEl.className = "gl-nick";
+          nickEl.textContent = nick;
+          var input = document.createElement("input");
+          input.className = "gl-full";
+          input.type = "text";
+          input.placeholder = "full name…";
+          input.value = fullnames[id] || "";
+          input.setAttribute("data-full", id);
+          input.addEventListener("input", function(){
+            var v = input.value;
+            if (v.trim()) fullnames[id] = v; else delete fullnames[id];
+            save();
+          });
+          row.appendChild(nickEl);
+          row.appendChild(input);
+          card.appendChild(row);
         });
-        html += '</ol>';
       } else {
-        html += '<div class="gl-empty">No guests yet</div>';
+        var empty = document.createElement("div");
+        empty.className = "gl-empty";
+        empty.textContent = "No guests yet";
+        card.appendChild(empty);
       }
-      html += '</div>';
+      grid.appendChild(card);
     });
-    html += '</div>';
-    box.innerHTML = html;
+    frag.appendChild(grid);
+    box.innerHTML = "";
+    box.appendChild(frag);
   }
 
   function escapeHTML(s){
@@ -525,7 +597,7 @@
   }
 
   function save(){
-    try { localStorage.setItem(KEY, JSON.stringify(names)); } catch(e){}
+    try { localStorage.setItem(KEY, JSON.stringify({names: names, fullnames: fullnames})); } catch(e){}
     scheduleRemoteSave();
   }
   var flashTimer;
@@ -551,7 +623,7 @@
   function commit(){
     if (current == null) return;
     var v = dlgInput.value.trim();
-    if (v) names[current] = v; else delete names[current];
+    if (v) names[current] = v; else { delete names[current]; delete fullnames[current]; }
     save(); refresh(); close();
   }
   function close(){ overlay.classList.remove("open"); current = null; }
@@ -563,7 +635,7 @@
     showBanner("Moving " + who + " — click a new seat (occupied seats will swap)");
     refresh();
   });
-  btnClear.addEventListener("click", function(){ delete names[current]; save(); refresh(); close(); });
+  btnClear.addEventListener("click", function(){ delete names[current]; delete fullnames[current]; save(); refresh(); close(); });
   overlay.addEventListener("click", function(e){ if (e.target === overlay) commit(); });
   dlgInput.addEventListener("keydown", function(e){
     if (e.key === "Enter") commit();
