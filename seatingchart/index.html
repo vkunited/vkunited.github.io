@@ -771,11 +771,12 @@ var SEED_FULLNAMES = {
   document.getElementById("search").addEventListener("input", refresh);
   document.getElementById("btnCopy").addEventListener("click", function(){
     var lines = TABLES.map(function(t){
-      var guests = seatPositions(t).map(function(s){ return names[t.id+"-"+s.key]; }).filter(Boolean);
-      var label = t.bg ? "Bride & Groom" : ("Table " + t.num);
-      return label + ": " + (guests.length ? guests.join(", ") : "—");
+      var seatIds = seatPositions(t).map(function(s){ return t.id+"-"+s.key; }).filter(function(id){ return names[id]; });
+      var guests = seatIds.map(function(id){ return fullnames[id] || names[id]; });
+      var label = t.bg ? "BRIDE & GROOM" : ("TABLE " + t.num);
+      return label + ":\n" + (guests.length ? guests.join(", ") : "—");
     });
-    var text = lines.join("\n");
+    var text = lines.join("\n\n");
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).then(function(){ flash("Copied ✓"); }, function(){ flash("Copy failed"); });
     } else {
