@@ -819,9 +819,12 @@ function renderChallengePanel() {
     const myGid = guestId();
     const myRow = rows.find(r => r.gid && r.gid === myGid);
 
-    // "Done" = what the server credits me with, unioned with anything I did on this device.
-    const doneSet = new Set([...(myRow ? myRow.completed : []), ...myChallenges()]);
-    const myPoints = myRow ? myRow.points : [...doneSet].reduce((s, id) => s + (CHALLENGE_MAP[id]?.points || 0), 0);
+    // Trust the server as the single source of truth. If a guest's photos are deleted
+    // they drop off the leaderboard, and their points/progress must drop with them —
+    // so we do NOT blend in any locally-cached "completed" state here.
+    const completedIds = myRow ? myRow.completed : [];
+    const doneSet = new Set(completedIds);
+    const myPoints = myRow ? myRow.points : 0;
     const scored = rows.filter(r => r.points > 0);
     const myRank = myRow ? (scored.findIndex(r => r.gid === myGid) + 1) : 0;
     const myLikes = myRow ? myRow.likesReceived : 0;
