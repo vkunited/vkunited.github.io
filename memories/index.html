@@ -734,7 +734,7 @@ function putWithProgress(url, file, onProgress) {
 let galleryTimer = null;
 async function loadGallery() {
     try {
-        const res = await fetch(`${API_BASE}/api/gallery?me=${encodeURIComponent(guestId())}`);
+        const res = await fetch(`${API_BASE}/api/gallery`);
         if (!res.ok) throw new Error(res.status);
         const items = await res.json();
         renderGallery(items);
@@ -807,28 +807,18 @@ function updateItemOverlay(el, it) {
 
 /* Like button + challenge badge overlaid on a gallery item. */
 function overlayFor(it) {
-    const c = it.challenge && CHALLENGE_MAP[it.challenge];
-    const chal = c ? `<div class="chal">${c.emoji} ${escapeHtml(challengeLabel(c))}</div>` : '';
-    let like;
-    if (it.mine) {
-        // Your own photo — you can't like it, but you can see how many likes it got.
-        like = `<div class="like own" title="${tr('Your photo', 'A te fotód', 'Ảnh của bạn')}">
-                    <span class="heart">♥</span><span class="cnt">${it.likes || 0}</span>
-                </div>`;
-    } else {
-        const liked = likedSet().has(it.id);
-        like = `<button class="like likebtn ${liked ? 'on' : ''}" data-id="${it.id}" onclick='toggleLike(event, "${it.id}")' aria-label="Like">
+    const liked = likedSet().has(it.id);
+    const like = `<button class="like likebtn ${liked ? 'on' : ''}" data-id="${it.id}" onclick='toggleLike(event, "${it.id}")' aria-label="Like">
                     <span class="heart">${liked ? '♥' : '♡'}</span><span class="cnt">${it.likes || 0}</span>
                   </button>`;
-    }
+    const c = it.challenge && CHALLENGE_MAP[it.challenge];
+    const chal = c ? `<div class="chal">${c.emoji} ${escapeHtml(challengeLabel(c))}</div>` : '';
     return like + chal;
 }
 
 /* Toggle a like for an item (optimistic UI + server sync, one per device). */
 async function toggleLike(ev, id) {
     ev.stopPropagation();
-    const item = (window._gallery || []).find(x => x.id === id);
-    if (item && item.mine) return;  // can't like your own photo
     const set = likedSet();
     const nowLiked = !set.has(id);
     if (nowLiked) set.add(id); else set.delete(id);
@@ -875,21 +865,12 @@ function openLightbox(i) {
     const nm = it.name ? `<div class="lb-name">— ${escapeHtml(it.name)}</div>` : '';
     const lc = it.challenge && CHALLENGE_MAP[it.challenge];
     const chal = lc ? `<div><span class="lb-chal">${lc.emoji} ${escapeHtml(challengeLabel(lc))} <span class="lb-chal-pts">+${lc.points}</span></span></div>` : '';
-    let likeBtn;
-    if (it.mine) {
-        likeBtn = `<div><div class="lb-like own">
-            <span class="heart">♥</span>
-            <span class="cnt">${it.likes || 0}</span>
-            <span>${tr('likes · your photo', 'tetszés · a te fotód', 'lượt thích · ảnh của bạn')}</span>
-        </div></div>`;
-    } else {
-        const liked = likedSet().has(it.id);
-        likeBtn = `<div><button class="lb-like likebtn ${liked ? 'on' : ''}" data-id="${it.id}" onclick='toggleLike(event, "${it.id}")'>
+    const liked = likedSet().has(it.id);
+    const likeBtn = `<div><button class="lb-like likebtn ${liked ? 'on' : ''}" data-id="${it.id}" onclick='toggleLike(event, "${it.id}")'>
             <span class="heart">${liked ? '♥' : '♡'}</span>
             <span>${tr('Like', 'Tetszik', 'Thích')}</span>
             <span class="cnt">${it.likes || 0}</span>
         </button></div>`;
-    }
     c.innerHTML = media + cap + nm + chal + likeBtn;
     document.getElementById('lightbox').classList.add('show');
 }
