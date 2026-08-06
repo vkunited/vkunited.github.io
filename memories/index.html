@@ -317,24 +317,24 @@
         <!-- ============ UPLOAD PANEL ============ -->
         <section class="panel active" id="panel-upload">
             <div class="card">
-                <p class="lead" data-lang="en">Take a photo or video right now to capture the moment. Add a little note if you like!</p>
-                <p class="lead" data-lang="hu">Készíts most egy fotót vagy videót, hogy megörökítsd a pillanatot. Írj hozzá egy kis üzenetet, ha szeretnél!</p>
-                <p class="lead" data-lang="vi">Chụp ảnh hoặc quay video ngay bây giờ để lưu giữ khoảnh khắc. Thêm một lời nhắn nếu bạn muốn!</p>
+                <p class="lead" data-lang="en">Take a photo or video right now, or add some from your gallery. Add a little note if you like!</p>
+                <p class="lead" data-lang="hu">Készíts most egy fotót vagy videót, vagy tölts fel párat a galériádból. Írj hozzá egy kis üzenetet, ha szeretnél!</p>
+                <p class="lead" data-lang="vi">Chụp ảnh hoặc quay video ngay, hoặc thêm vài tấm từ thư viện. Thêm một lời nhắn nếu bạn muốn!</p>
 
                 <label class="drop" for="fileInput" id="dropZone">
                     <div class="icon">📸</div>
                     <div class="big">
-                        <span data-lang="en">Tap to take a photo or video</span>
-                        <span data-lang="hu">Koppints fotó vagy videó készítéséhez</span>
-                        <span data-lang="vi">Chạm để chụp ảnh hoặc quay video</span>
+                        <span data-lang="en">Tap to take or add photos &amp; videos</span>
+                        <span data-lang="hu">Koppints fotók/videók készítéséhez vagy feltöltéséhez</span>
+                        <span data-lang="vi">Chạm để chụp hoặc thêm ảnh &amp; video</span>
                     </div>
                     <div class="small">
-                        <span data-lang="en">Camera only — capture as many as you like!</span>
-                        <span data-lang="hu">Csak kamera — készíts annyit, amennyit szeretnél!</span>
-                        <span data-lang="vi">Chỉ máy ảnh — chụp bao nhiêu tùy thích!</span>
+                        <span data-lang="en">Take a new one or choose from your gallery — as many as you like!</span>
+                        <span data-lang="hu">Készíts újat vagy válassz a galériádból — annyit, amennyit szeretnél!</span>
+                        <span data-lang="vi">Chụp mới hoặc chọn từ thư viện — bao nhiêu tùy thích!</span>
                     </div>
                 </label>
-                <input type="file" id="fileInput" accept="image/*,video/*" capture="environment">
+                <input type="file" id="fileInput" accept="image/*,video/*" multiple>
 
                 <div class="selected-grid" id="selectedGrid"></div>
 
