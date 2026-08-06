@@ -151,10 +151,10 @@
   // bottom row = 1,2 then upward. Both columns now hold 7 tables each,
   // starting one row down (row0 stays clear of the food tables on the left).
   var rightIds = [2,3,4,5,6,7,14];
-  var rightNums = [14,12,10,8,6,4,2];
+  var rightNums = [13,11,9,7,5,3,1];
   for (var i=0;i<7;i++) TABLES.push({id:rightIds[i], num:rightNums[i], cx:690, cy: ROW0 + (i+1)*ROWSTEP});
   var leftIds = [1,13,12,11,10,9,8];
-  var leftNums = [13,11,9,7,5,3,1];
+  var leftNums = [14,12,10,8,6,4,2];
   for (var j=0;j<7;j++) TABLES.push({id:leftIds[j], num:leftNums[j], cx:210, cy: ROW0 + (j+1)*ROWSTEP});
   // bride & groom table, bottom centre, 2 seats
   TABLES.push({id:"BG", cx:450, cy: ROW0 + 7*ROWSTEP, bg:true});
