@@ -748,20 +748,61 @@ async function loadGallery() {
     }
 }
 
+function mediaHTML(it) {
+    return it.type === 'video'
+        ? `<video src="${it.url}#t=0.1" muted playsinline preload="metadata" onerror="mediaFallback(this, '${it.url}')"></video><div class="play">▶</div>`
+        : `<img src="${it.url}" loading="lazy" onerror="mediaFallback(this, '${it.url}')">`;
+}
+function capHTML(it) {
+    return it.caption ? `<div class="cap">${escapeHtml(it.caption)}</div>` : '';
+}
+
 function renderGallery(items) {
     const grid = document.getElementById('galleryGrid');
     const empty = document.getElementById('galleryEmpty');
     document.getElementById('countPill').textContent = items.length;
+    window._gallery = items;
     if (!items.length) { grid.innerHTML = ''; empty.style.display = 'block'; return; }
     empty.style.display = 'none';
-    grid.innerHTML = items.map((it, i) => {
-        const cap = it.caption ? `<div class="cap">${escapeHtml(it.caption)}</div>` : '';
-        const media = it.type === 'video'
-            ? `<video src="${it.url}#t=0.1" muted playsinline preload="metadata" onerror="mediaFallback(this, '${it.url}')"></video><div class="play">▶</div>`
-            : `<img src="${it.url}" loading="lazy" onerror="mediaFallback(this, '${it.url}')">`;
-        return `<div class="g-item" onclick='openLightbox(${i})'>${media}${overlayFor(it)}${cap}</div>`;
-    }).join('');
-    window._gallery = items;
+
+    // Incremental update: reuse existing tiles so images don't reload/blink on every poll.
+    // Only new photos are created, removed ones dropped, and like counts refreshed in place.
+    const existing = new Map();
+    for (const el of Array.from(grid.children)) existing.set(el.getAttribute('data-id'), el);
+
+    const incoming = new Set(items.map(it => it.id));
+    for (const [id, el] of existing) {
+        if (!incoming.has(id)) { el.remove(); existing.delete(id); }
+    }
+
+    const ordered = [];
+    items.forEach((it, i) => {
+        let el = existing.get(it.id);
+        if (!el) {
+            el = document.createElement('div');
+            el.className = 'g-item';
+            el.setAttribute('data-id', it.id);
+            el.innerHTML = mediaHTML(it) + overlayFor(it) + capHTML(it);
+        } else {
+            updateItemOverlay(el, it);   // refresh like count/state, leave the media alone
+        }
+        el.onclick = () => openLightbox(i);
+        ordered.push(el);
+    });
+    // Reorder tiles to match the data (appendChild MOVES existing nodes — it doesn't reload them).
+    for (const el of ordered) grid.appendChild(el);
+}
+
+/* Refresh a tile's like count + liked state without touching its image (avoids reload/blink). */
+function updateItemOverlay(el, it) {
+    const cnt = el.querySelector('.like .cnt');
+    if (cnt) cnt.textContent = it.likes || 0;
+    const btn = el.querySelector('.likebtn');
+    if (btn) {
+        const liked = likedSet().has(it.id);
+        btn.classList.toggle('on', liked);
+        const h = btn.querySelector('.heart'); if (h) h.textContent = liked ? '♥' : '♡';
+    }
 }
 
 /* Like button + challenge badge overlaid on a gallery item. */
