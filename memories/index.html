@@ -188,6 +188,7 @@
         .lightbox .lb-like .heart { font-size: 1.2rem; line-height: 1; }
         .lightbox .lb-like .cnt { font-variant-numeric: tabular-nums; }
         .lightbox .lb-like.on { background: rgba(212,175,55,0.95); color: #3a3320; border-color: transparent; }
+        .lightbox .lb-like.own { cursor: default; }
 
         footer { text-align: center; padding: 30px 20px 40px; color: #b6b0a0; font-size: 0.8rem; }
         footer .heart { color: var(--secondary-color); }
@@ -216,6 +217,15 @@
         }
         .g-item .like .heart { font-size: 0.92rem; }
         .g-item .like.on { background: rgba(212,175,55,0.95); color: #3a3320; }
+        .g-item .like.own { cursor: default; background: rgba(0,0,0,0.4); }
+        .media-fallback {
+            width: 100%; height: 100%; min-height: 120px; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 4px; text-align: center; cursor: pointer;
+            background: #efece3; color: #8a8167; padding: 12px; box-sizing: border-box;
+        }
+        .media-fallback .mf-icon { font-size: 1.6rem; }
+        .media-fallback .mf-text { font-size: 0.8rem; }
+        .media-fallback .mf-open { font-size: 0.72rem; color: var(--secondary-color); letter-spacing: 0.5px; }
         .g-item .chal {
             position: absolute; top: 6px; left: 6px; z-index: 3; background: rgba(255,255,255,0.92); color: #5c6a56;
             font-size: 0.66rem; padding: 2px 8px; border-radius: 20px; max-width: 78%; white-space: nowrap;
@@ -625,7 +635,61 @@ async function startUpload() {
     }
 }
 
+/* Decode an image File to something drawable on a canvas. Tries an <img> first
+   (iOS Safari can render HEIC that way), then createImageBitmap. */
+async function loadDrawable(file) {
+    try {
+        const img = new Image();
+        const u = URL.createObjectURL(file);
+        img.src = u;
+        await img.decode();
+        return { el: img, w: img.naturalWidth || img.width, h: img.naturalHeight || img.height, url: u };
+    } catch (e) {
+        try { const bmp = await createImageBitmap(file); return { el: bmp, w: bmp.width, h: bmp.height }; }
+        catch (e2) { return null; }
+    }
+}
+
+/* iPhones save photos as HEIC/HEIF, which many Android phones can't display.
+   Convert those to JPEG on the uploader's device so every phone can view them.
+   Anything else uploads untouched; if conversion fails we fall back to the original. */
+async function toUploadable(file) {
+    const isHeic = /image\/(heic|heif)/i.test(file.type || '') || /\.(heic|heif)$/i.test(file.name || '');
+    if (!isHeic) return file;
+    try {
+        const d = await loadDrawable(file);
+        if (!d) return file;
+        const max = 3200;
+        const scale = Math.min(1, max / Math.max(d.w, d.h));
+        const w = Math.round(d.w * scale), h = Math.round(d.h * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(d.el, 0, 0, w, h);
+        if (d.url) URL.revokeObjectURL(d.url);
+        const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.92));
+        if (!blob) return file;
+        const jpgName = (file.name || 'photo').replace(/\.(heic|heif)$/i, '') + '.jpg';
+        return new File([blob], jpgName, { type: 'image/jpeg' });
+    } catch (e) {
+        return file;
+    }
+}
+
+/* Replace media that a browser can't render with a friendly, tappable fallback
+   (instead of a broken-image icon). */
+function mediaFallback(el, url) {
+    const box = document.createElement('div');
+    box.className = 'media-fallback';
+    box.innerHTML = `<span class="mf-icon">🖼️</span>`
+        + `<span class="mf-text">${tr('Preview unavailable', 'Előnézet nem elérhető', 'Không xem trước được')}</span>`
+        + `<span class="mf-open">${tr('Tap to open', 'Koppints a megnyitáshoz', 'Chạm để mở')}</span>`;
+    if (url) box.addEventListener('click', (e) => { e.stopPropagation(); window.open(url, '_blank'); });
+    if (el && el.replaceWith) el.replaceWith(box);
+}
+
 async function uploadOne(file, name, caption, challenge, onProgress) {
+    // 0) make sure the file is viewable everywhere (HEIC -> JPEG)
+    file = await toUploadable(file);
     // 1) ask the Worker for a presigned upload URL
     const signRes = await fetch(`${API_BASE}/api/sign`, {
         method: 'POST',
@@ -670,7 +734,7 @@ function putWithProgress(url, file, onProgress) {
 let galleryTimer = null;
 async function loadGallery() {
     try {
-        const res = await fetch(`${API_BASE}/api/gallery`);
+        const res = await fetch(`${API_BASE}/api/gallery?me=${encodeURIComponent(guestId())}`);
         if (!res.ok) throw new Error(res.status);
         const items = await res.json();
         renderGallery(items);
@@ -693,8 +757,8 @@ function renderGallery(items) {
     grid.innerHTML = items.map((it, i) => {
         const cap = it.caption ? `<div class="cap">${escapeHtml(it.caption)}</div>` : '';
         const media = it.type === 'video'
-            ? `<video src="${it.url}#t=0.1" muted playsinline preload="metadata"></video><div class="play">▶</div>`
-            : `<img src="${it.url}" loading="lazy">`;
+            ? `<video src="${it.url}#t=0.1" muted playsinline preload="metadata" onerror="mediaFallback(this, '${it.url}')"></video><div class="play">▶</div>`
+            : `<img src="${it.url}" loading="lazy" onerror="mediaFallback(this, '${it.url}')">`;
         return `<div class="g-item" onclick='openLightbox(${i})'>${media}${overlayFor(it)}${cap}</div>`;
     }).join('');
     window._gallery = items;
@@ -702,18 +766,28 @@ function renderGallery(items) {
 
 /* Like button + challenge badge overlaid on a gallery item. */
 function overlayFor(it) {
-    const liked = likedSet().has(it.id);
-    const like = `<button class="like likebtn ${liked ? 'on' : ''}" data-id="${it.id}" onclick='toggleLike(event, "${it.id}")' aria-label="Like">
-                    <span class="heart">${liked ? '♥' : '♡'}</span><span class="cnt">${it.likes || 0}</span>
-                  </button>`;
     const c = it.challenge && CHALLENGE_MAP[it.challenge];
     const chal = c ? `<div class="chal">${c.emoji} ${escapeHtml(challengeLabel(c))}</div>` : '';
+    let like;
+    if (it.mine) {
+        // Your own photo — you can't like it, but you can see how many likes it got.
+        like = `<div class="like own" title="${tr('Your photo', 'A te fotód', 'Ảnh của bạn')}">
+                    <span class="heart">♥</span><span class="cnt">${it.likes || 0}</span>
+                </div>`;
+    } else {
+        const liked = likedSet().has(it.id);
+        like = `<button class="like likebtn ${liked ? 'on' : ''}" data-id="${it.id}" onclick='toggleLike(event, "${it.id}")' aria-label="Like">
+                    <span class="heart">${liked ? '♥' : '♡'}</span><span class="cnt">${it.likes || 0}</span>
+                  </button>`;
+    }
     return like + chal;
 }
 
 /* Toggle a like for an item (optimistic UI + server sync, one per device). */
 async function toggleLike(ev, id) {
     ev.stopPropagation();
+    const item = (window._gallery || []).find(x => x.id === id);
+    if (item && item.mine) return;  // can't like your own photo
     const set = likedSet();
     const nowLiked = !set.has(id);
     if (nowLiked) set.add(id); else set.delete(id);
@@ -754,18 +828,27 @@ function openLightbox(i) {
     const it = window._gallery[i];
     const c = document.getElementById('lightboxContent');
     const media = it.type === 'video'
-        ? `<video src="${it.url}" controls autoplay playsinline></video>`
-        : `<img src="${it.url}">`;
+        ? `<video src="${it.url}" controls autoplay playsinline onerror="mediaFallback(this, '${it.url}')"></video>`
+        : `<img src="${it.url}" onerror="mediaFallback(this, '${it.url}')">`;
     const cap = it.caption ? `<div class="lb-cap">“${escapeHtml(it.caption)}”</div>` : '';
     const nm = it.name ? `<div class="lb-name">— ${escapeHtml(it.name)}</div>` : '';
     const lc = it.challenge && CHALLENGE_MAP[it.challenge];
     const chal = lc ? `<div><span class="lb-chal">${lc.emoji} ${escapeHtml(challengeLabel(lc))} <span class="lb-chal-pts">+${lc.points}</span></span></div>` : '';
-    const liked = likedSet().has(it.id);
-    const likeBtn = `<div><button class="lb-like likebtn ${liked ? 'on' : ''}" data-id="${it.id}" onclick='toggleLike(event, "${it.id}")'>
+    let likeBtn;
+    if (it.mine) {
+        likeBtn = `<div><div class="lb-like own">
+            <span class="heart">♥</span>
+            <span class="cnt">${it.likes || 0}</span>
+            <span>${tr('likes · your photo', 'tetszés · a te fotód', 'lượt thích · ảnh của bạn')}</span>
+        </div></div>`;
+    } else {
+        const liked = likedSet().has(it.id);
+        likeBtn = `<div><button class="lb-like likebtn ${liked ? 'on' : ''}" data-id="${it.id}" onclick='toggleLike(event, "${it.id}")'>
             <span class="heart">${liked ? '♥' : '♡'}</span>
             <span>${tr('Like', 'Tetszik', 'Thích')}</span>
             <span class="cnt">${it.likes || 0}</span>
         </button></div>`;
+    }
     c.innerHTML = media + cap + nm + chal + likeBtn;
     document.getElementById('lightbox').classList.add('show');
 }
