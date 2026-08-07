@@ -68,6 +68,7 @@
                 </div>
                 <div class="left">
                     <button class="btn gold" onclick="downloadAll()">⬇ Download all (links)</button>
+                    <button class="btn danger" id="deleteAllBtn" onclick="deleteAll()">🗑 Delete all</button>
                 </div>
             </div>
             <div class="grid" id="grid"></div>
@@ -163,6 +164,41 @@ function downloadAll() {
     a.href = URL.createObjectURL(blob);
     a.download = 'vk-memories-urls.txt';
     a.click();
+}
+
+async function deleteAll() {
+    const n = ITEMS.length;
+    if (!n) { alert('Nothing to delete — the gallery is already empty.'); return; }
+    // Irreversible: require the host to type DELETE so it can't happen by accident.
+    const typed = prompt(`This permanently deletes ALL ${n} photos & videos from the gallery and storage.\nThis cannot be undone.\n\nType DELETE to confirm:`);
+    if (typed == null || typed.trim().toUpperCase() !== 'DELETE') return;
+
+    const btn = document.getElementById('deleteAllBtn');
+    const original = btn.textContent;
+    btn.disabled = true;
+
+    const ids = ITEMS.map(it => it.id);
+    let done = 0, failed = 0;
+    for (const id of ids) {
+        btn.textContent = `Deleting ${done + failed + 1}/${ids.length}…`;
+        try {
+            const res = await fetch(`${API_BASE}/api/admin/delete`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Admin-Token': TOKEN },
+                body: JSON.stringify({ id })
+            });
+            if (!res.ok) throw new Error(res.status);
+            ITEMS = ITEMS.filter(x => x.id !== id);
+            done++;
+        } catch (e) { failed++; }
+    }
+
+    render();
+    btn.disabled = false;
+    btn.textContent = original;
+    if (failed) alert(`Deleted ${done}. ${failed} could not be deleted — tap "Delete all" again to retry those.`);
+    else alert(`Deleted all ${done}. The gallery is now empty.`);
+    load(); // re-sync with the server
 }
 
 function esc(s){ return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
