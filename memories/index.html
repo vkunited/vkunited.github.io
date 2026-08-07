@@ -650,15 +650,26 @@ async function loadDrawable(file) {
     }
 }
 
-/* iPhones save photos as HEIC/HEIF, which many Android phones can't display.
-   Convert those to JPEG on the uploader's device so every phone can view them.
-   Anything else uploads untouched; if conversion fails we fall back to the original. */
+/* Formats every browser can already display — leave these untouched (no quality loss,
+   and don't flatten animated GIFs). */
+function isWebSafeImage(file) {
+    const t = (file.type || '').toLowerCase();
+    const n = (file.name || '').toLowerCase();
+    return /image\/(jpeg|jpg|png|webp|gif|svg\+xml)/.test(t) || /\.(jpe?g|png|webp|gif|svg)$/.test(n);
+}
+function isVideoFile(file) {
+    return /^video\//i.test(file.type || '') || /\.(mp4|mov|m4v|webm|avi|mkv|3gp)$/i.test(file.name || '');
+}
+
+/* Normalize photos so they display on every browser. iPhone HEIC/HEIF — and any other
+   unusual image format the uploader's device can read (TIFF, AVIF, BMP…) — get re-encoded
+   to JPEG on the uploader's device. Standard JPEG/PNG/WebP/GIF and videos are left as-is,
+   and if a conversion can't happen we fall back to uploading the original. */
 async function toUploadable(file) {
-    const isHeic = /image\/(heic|heif)/i.test(file.type || '') || /\.(heic|heif)$/i.test(file.name || '');
-    if (!isHeic) return file;
+    if (isVideoFile(file) || isWebSafeImage(file)) return file;
     try {
         const d = await loadDrawable(file);
-        if (!d) return file;
+        if (!d || !d.w || !d.h) return file;   // couldn't decode it — upload the original
         const max = 3200;
         const scale = Math.min(1, max / Math.max(d.w, d.h));
         const w = Math.round(d.w * scale), h = Math.round(d.h * scale);
@@ -668,8 +679,8 @@ async function toUploadable(file) {
         if (d.url) URL.revokeObjectURL(d.url);
         const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.92));
         if (!blob) return file;
-        const jpgName = (file.name || 'photo').replace(/\.(heic|heif)$/i, '') + '.jpg';
-        return new File([blob], jpgName, { type: 'image/jpeg' });
+        const base = (file.name || 'photo').replace(/\.[^.]+$/, '');
+        return new File([blob], base + '.jpg', { type: 'image/jpeg' });
     } catch (e) {
         return file;
     }
